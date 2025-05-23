@@ -33,11 +33,11 @@ public class Auction {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false, unique = true)
-    private String prodcut;
+    private Product prodcut;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
-    private String seller;
+    private User seller;
 
     @Column(nullable = false)
     private LocalDateTime startTime;
