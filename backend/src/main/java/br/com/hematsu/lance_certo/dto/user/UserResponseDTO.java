@@ -9,5 +9,4 @@ public record UserResponseDTO(
                 String name,
                 UserRole role,
                 String phone) {
-
 }
