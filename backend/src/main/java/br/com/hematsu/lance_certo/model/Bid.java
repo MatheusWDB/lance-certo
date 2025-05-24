@@ -16,7 +16,7 @@ import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
 @Data
-@Entity(name = "tb_bids")
+@Entity
 public class Bid {
 
     @Id

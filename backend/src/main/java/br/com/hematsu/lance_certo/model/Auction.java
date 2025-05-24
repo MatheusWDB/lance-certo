@@ -24,7 +24,7 @@ import jakarta.persistence.OrderBy;
 import lombok.Data;
 
 @Data
-@Entity(name = "tb_auctions")
+@Entity
 public class Auction {
 
     @Id
