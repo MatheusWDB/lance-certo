@@ -37,4 +37,10 @@ public class Bid {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public Bid(Auction auction, User bidder, BigDecimal amount){
+        this.auction = auction;
+        this.bidder = bidder;
+        this.amount = amount;
+    }
 }
