@@ -18,7 +18,6 @@ public record AuctionDetailsResponseDTO(
                 BigDecimal currentBid,
                 UserResponseDTO currentBidder,
                 AuctionStatus status,
-                // List<BidDTO> bidHistory,
                 UserResponseDTO winner,
                 LocalDateTime createdAt,
                 LocalDateTime updatedAt) {
