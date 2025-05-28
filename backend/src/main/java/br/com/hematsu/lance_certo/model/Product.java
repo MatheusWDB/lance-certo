@@ -19,7 +19,7 @@ import jakarta.persistence.OneToOne;
 import lombok.Data;
 
 @Data
-@Entity
+@Entity(name = "tb_products")
 public class Product {
     
     @Id

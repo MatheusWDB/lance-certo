@@ -17,7 +17,7 @@ import jakarta.persistence.OneToMany;
 import lombok.Data;
 
 @Data
-@Entity
+@Entity(name = "tb_users")
 public class User {
 
     @Id

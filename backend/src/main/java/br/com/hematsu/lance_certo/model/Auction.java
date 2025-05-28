@@ -24,7 +24,7 @@ import jakarta.persistence.OrderBy;
 import lombok.Data;
 
 @Data
-@Entity
+@Entity(name = "tb_auctions")
 public class Auction {
 
     @Id
@@ -75,6 +75,6 @@ public class Auction {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("amount Desc, created ASC")
+    @OrderBy("amount Desc, createdAt ASC")
     private List<Bid> bids;
 }

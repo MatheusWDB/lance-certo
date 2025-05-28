@@ -16,7 +16,7 @@ import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
 @Data
-@Entity
+@Entity(name = "tb_bids")
 public class Bid {
 
     @Id
@@ -38,7 +38,11 @@ public class Bid {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public Bid(Auction auction, User bidder, BigDecimal amount){
+    public Bid() {
+        
+    }
+
+    public Bid(Auction auction, User bidder, BigDecimal amount) {
         this.auction = auction;
         this.bidder = bidder;
         this.amount = amount;
