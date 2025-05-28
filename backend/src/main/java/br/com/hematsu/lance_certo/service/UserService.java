@@ -1,12 +1,11 @@
 package br.com.hematsu.lance_certo.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.hematsu.lance_certo.dto.user.UserLoginRequestDTO;
 import br.com.hematsu.lance_certo.dto.user.UserRegistrationRequestDTO;
+import br.com.hematsu.lance_certo.dto.user.UserResponseDTO;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.repository.UserRepository;
@@ -24,22 +23,34 @@ public class UserService {
 
     @Transactional
     public void registerUser(UserRegistrationRequestDTO registrationDTO) {
-        if (findByUsernameOrEmail(registrationDTO.username(), registrationDTO.email()).contains(true)) {
+
+        if (doesUsernameOrEmailAlreadyExist(registrationDTO.username(), registrationDTO.email())) {
             throw new RuntimeException("User with this email or username already exists");
         }
 
-        userRepository.save(userMapper.userRegistrationRequestDTOToEntity(registrationDTO));
+        userRepository.save(userMapper.userRegistrationRequestDTOToUser(registrationDTO));
+    }
+
+    public UserResponseDTO userLogin(UserLoginRequestDTO loginDTO) {
+
+        User user = userRepository.findByLogin(loginDTO.login()).orElseThrow(() -> new RuntimeException());
+
+        if(!user.getPassword().equals(loginDTO.password())){
+            throw new RuntimeException();
+        }
+
+        return userMapper.userToUserResponseDTO(user);
     }
 
     public User findById(Long id) {
         return userRepository.findById(id).orElseThrow(() -> new RuntimeException());
     }
 
-    public List<Boolean> findByUsernameOrEmail(String username, String email) {
-        List<Boolean> existingUserByUsernameOrEmail = new ArrayList<>();
-        existingUserByUsernameOrEmail.add(userRepository.findByUsernameOrEmail(email).isPresent());
-        existingUserByUsernameOrEmail.add(userRepository.findByUsernameOrEmail(username).isPresent());
+    public Boolean doesUsernameOrEmailAlreadyExist(String username, String email) {
+        if (userRepository.findByLogin(username).isPresent() || userRepository.findByLogin(email).isPresent()) {
+            return true;
+        }
 
-        return existingUserByUsernameOrEmail;
+        return false;
     }
 }
