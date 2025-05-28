@@ -9,6 +9,6 @@ import br.com.hematsu.lance_certo.model.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    @Query("SELECT u FROM Users u WHERE u.username = :login OR u.email = :login")
-    Optional<User> findByUsernameOrEmail(String login);
+    @Query("SELECT u FROM tb_users u WHERE u.username = :login OR u.email = :login")
+    Optional<User> findByLogin(String login);
 }
