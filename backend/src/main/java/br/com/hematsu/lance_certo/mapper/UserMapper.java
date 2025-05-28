@@ -9,7 +9,9 @@ import br.com.hematsu.lance_certo.model.User;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    User userRegistrationRequestDTOToEntity(UserRegistrationRequestDTO dto);
+    User userRegistrationRequestDTOToUser(UserRegistrationRequestDTO dto);
+
+    User userResponseDTOToUser(UserResponseDTO dto);
 
     UserResponseDTO userToUserResponseDTO(User user);
 
