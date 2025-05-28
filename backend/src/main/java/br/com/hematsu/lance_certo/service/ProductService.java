@@ -27,23 +27,28 @@ public class ProductService {
 
     @Transactional
     public void createProduct(ProductCreateRequestDTO productDTO, Long sellerId) {
+        
         User seller = userService.findById(sellerId);
         Product product = productMapper.productCreateRequestDTOToEntity(productDTO);
 
         product.setSeller(seller);
 
-        productRepository.save(product);
+        try {
+            productRepository.save(product);
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
     }
 
     public ProductResponseDTO findById(Long id) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException());
 
+        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException());
         return productMapper.productToProductResponseDTO(product);
     }
 
     public List<ProductResponseDTO> findProductsBySeller(Long sellerId) {
-        List<Product> products = productRepository.findBySellerId(sellerId);
 
+        List<Product> products = productRepository.findBySellerId(sellerId);
         return products.stream().map(product -> productMapper.productToProductResponseDTO(product)).toList();
     }
 }
