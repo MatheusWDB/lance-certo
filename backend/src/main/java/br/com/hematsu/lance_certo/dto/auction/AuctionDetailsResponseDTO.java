@@ -10,7 +10,6 @@ import br.com.hematsu.lance_certo.model.AuctionStatus;
 public record AuctionDetailsResponseDTO(
                 Long id,
                 ProductResponseDTO product,
-                UserResponseDTO seller,
                 LocalDateTime startTime,
                 LocalDateTime endTime,
                 BigDecimal initialPrice,
