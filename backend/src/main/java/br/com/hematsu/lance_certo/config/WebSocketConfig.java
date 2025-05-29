@@ -12,33 +12,20 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
+    public void configureMessageBroker(@NonNull MessageBrokerRegistry registry) {
 
-        // Habilita um simple broker em memória.
-        // Mensagens com prefixo "/topic" ou "/queue" serão roteadas para o broker e
-        // entregues aos clientes inscritos.
-        config.enableSimpleBroker("/topic", "/queue");
+        registry.enableSimpleBroker("/topic", "/queue");
 
-        // Define o prefixo para destinos "de aplicação".
-        // Mensagens enviadas do cliente para o servidor com prefixo "/app"
-        // serão roteadas para métodos @MessageMapping em classes @Controller.
-        // Para este projeto, a maior parte da comunicação cliente->servidor será via
-        // REST,
-        // mas é uma configuração padrão.
-        config.setApplicationDestinationPrefixes("/app");
+        registry.setApplicationDestinationPrefixes("/app");
 
-        // Opcional: Configurar prefíxos para o usuário.
-        // Se você tiver destinos específicos por usuário (ex: notificações privadas).
-        // config.setUserDestinationPrefix("/user");
+        registry.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-        // Registra o endpoint "/ws" para o handshake do WebSocket.
-        // Clientes usarão ws://<host>:<porta>/ws para se conectar.
-        // withSockJS() habilita o suporte a SockJS para navegadores que não suportam
-        // WebSocket nativamente.
-        registry.addEndpoint("/ws").withSockJS();
+
+        registry.addEndpoint("/ws").setAllowedOrigins("http://127.0.0.1:5501", "http://127.0.0.1:5500",
+                "http://localhost:3000", "http://localhost:4200").withSockJS();
     }
 
 }
