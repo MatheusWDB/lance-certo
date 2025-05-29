@@ -67,22 +67,6 @@ public class AuctionService {
     public AuctionDetailsResponseDTO findAuctionDetailsById(Long auctionId) {
 
         Auction auction = auctionRepository.findById(auctionId).orElseThrow(() -> new RuntimeException());
-        /*
-         * AuctionDetailsResponseDTO auctionDTO = new AuctionDetailsResponseDTO(
-         * auction.getId(),
-         * productMapper.productToProductResponseDTO(auction.getProduct()),
-         * userMapper.userToUserResponseDTO(auction.getSeller()),
-         * auction.getStartTime(),
-         * auction.getEndTime(),
-         * auction.getInitialPrice(),
-         * auction.getMinimunBidIncrement(),
-         * auction.getCurrentBid(),
-         * userMapper.userToUserResponseDTO(auction.getCurrentBidder()),
-         * auction.getStatus(),
-         * userMapper.userToUserResponseDTO(auction.getWinner()),
-         * auction.getCreatedAt(),
-         * auction.getUpdatedAt());
-         */
 
         return auctionMapper.auctionToAuctionDetailsResponseDTO(auction);
     }
@@ -94,7 +78,7 @@ public class AuctionService {
     }
 
     @Transactional
-    @Scheduled@Scheduled(cron = "0 * * * * ?")
+    @Scheduled(cron = "0 * * * * ?")
     public void processPendingAuctions() {
 
         List<Auction> auctions = auctionRepository.findByStatusAndStartTimeBefore(AuctionStatus.PENDING,
@@ -105,7 +89,7 @@ public class AuctionService {
     }
 
     @Transactional
-    @Scheduled@Scheduled(cron = "0 * * * * ?")
+    @Scheduled(cron = "0 * * * * ?")
     public void processEndingAuctions() {
 
         List<Auction> auctions = auctionRepository.findByStatusAndEndTimeBefore(AuctionStatus.ACTIVE,
