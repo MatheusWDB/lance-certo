@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -26,19 +27,22 @@ public class AuctionService {
     private final ProductMapper productMapper;
     private final ProductService productService;
     private final UserService userService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public AuctionService(
             AuctionRepository auctionRepository,
             AuctionMapper auctionMapper,
             ProductMapper productMapper,
             ProductService productService,
-            UserService userService) {
+            UserService userService,
+            SimpMessagingTemplate messagingTemplate) {
 
         this.auctionRepository = auctionRepository;
         this.auctionMapper = auctionMapper;
         this.productMapper = productMapper;
         this.productService = productService;
         this.userService = userService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Transactional
@@ -83,9 +87,20 @@ public class AuctionService {
 
         List<Auction> auctions = auctionRepository.findByStatusAndStartTimeBefore(AuctionStatus.PENDING,
                 LocalDateTime.now());
+
+        if (auctions.isEmpty()) {
+            return;
+        }
+
         auctions.forEach(auction -> auction.setStatus(AuctionStatus.ACTIVE));
 
         auctionRepository.saveAll(auctions);
+
+        auctions.forEach(auction -> {
+            AuctionDetailsResponseDTO auctionDTO = auctionMapper.auctionToAuctionDetailsResponseDTO(auction);
+            String destination = "/topic/auctions/" + auctionDTO.id() + "/status";
+            messagingTemplate.convertAndSend(destination, auctionDTO);
+        });
     }
 
     @Transactional
@@ -94,15 +109,28 @@ public class AuctionService {
 
         List<Auction> auctions = auctionRepository.findByStatusAndEndTimeBefore(AuctionStatus.ACTIVE,
                 LocalDateTime.now());
+
+        if (auctions.isEmpty()) {
+            return;
+        }
+
         auctions.forEach(auction -> {
             auction.setStatus(AuctionStatus.CLOSED);
 
             if (auction.getCurrentBid().compareTo(BigDecimal.ZERO) > 0
-                    && !auction.getCurrentBidder().equals(auction.getSeller()))
+                    && !auction.getCurrentBidder().equals(auction.getSeller())) {
+
                 auction.setWinner(auction.getCurrentBidder());
+            }
         });
 
         auctionRepository.saveAll(auctions);
+
+        auctions.forEach(auction -> {
+            AuctionDetailsResponseDTO auctionDTO = auctionMapper.auctionToAuctionDetailsResponseDTO(auction);
+            String destination = "/topic/auctions/" + auctionDTO.id() + "/status";
+            messagingTemplate.convertAndSend(destination, auctionDTO);
+        });
     }
 
     @Transactional
