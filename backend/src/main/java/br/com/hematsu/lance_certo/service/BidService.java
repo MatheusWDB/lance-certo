@@ -45,13 +45,22 @@ public class BidService {
         Auction auction = auctionService.findById(auctionId);
         User bidder = userService.findById(bidderId);
 
-        if (!auction.getStatus().equals(AuctionStatus.ACTIVE) ||
-                !auction.getEndTime().isAfter(LocalDateTime.now()) ||
-                auction.getSeller().equals(bidder) ||
-                amount.compareTo(auction.getInitialPrice().add(auction.getMinimunBidIncrement())) < 0 ||
-                amount.compareTo(auction.getCurrentBid().add(auction.getMinimunBidIncrement())) < 0) {
-
-            throw new RuntimeException();
+        if (!auction.getStatus().equals(AuctionStatus.ACTIVE)) {
+            throw new RuntimeException("O leilão não está ativo");
+        }
+        if (!auction.getEndTime().isAfter(LocalDateTime.now())) {
+            throw new RuntimeException("O leilão já encerrou");
+        }
+        if (auction.getSeller().equals(bidder)) {
+            throw new RuntimeException("O vendedor não pode dá lance no próprio leilão");
+        }
+        if (amount.compareTo(auction.getInitialPrice().add(auction.getMinimunBidIncrement())) < 0) {
+            throw new RuntimeException(
+                    "O lance não pode ser menor do quê a soma do preço inicial mais o incremento mínimo");
+        }
+        if (amount.compareTo(auction.getCurrentBid().add(auction.getMinimunBidIncrement())) < 0) {
+            throw new RuntimeException(
+                    "O lance não pode ser menor do quê a soma do do lance atual mais o incremento mínimo");
         }
 
         Bid bid = new Bid(auction, bidder, amount);

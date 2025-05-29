@@ -12,7 +12,6 @@ import br.com.hematsu.lance_certo.dto.auction.AuctionCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.product.ProductCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.user.UserRegistrationRequestDTO;
 import br.com.hematsu.lance_certo.mapper.AuctionMapper;
-import br.com.hematsu.lance_certo.mapper.BidMapper;
 import br.com.hematsu.lance_certo.mapper.ProductMapper;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.Auction;
@@ -21,7 +20,6 @@ import br.com.hematsu.lance_certo.model.Product;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.model.UserRole;
 import br.com.hematsu.lance_certo.repository.AuctionRepository;
-import br.com.hematsu.lance_certo.repository.BidRepository;
 import br.com.hematsu.lance_certo.repository.ProductRepository;
 import br.com.hematsu.lance_certo.repository.UserRepository;
 
@@ -32,25 +30,24 @@ public class TestConfig implements CommandLineRunner {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final AuctionRepository auctionRepository;
-    private final BidRepository bidRepository;
     private final UserMapper userMapper;
     private final ProductMapper productMapper;
     private final AuctionMapper auctionMapper;
-    private final BidMapper bidMapper;
 
-    public TestConfig(UserRepository userRepository, ProductRepository productRepository,
-            AuctionRepository auctionRepository, BidRepository bidRepository, UserMapper userMapper,
+    public TestConfig(
+            UserRepository userRepository,
+            ProductRepository productRepository,
+            AuctionRepository auctionRepository,
+            UserMapper userMapper, 
             ProductMapper productMapper,
-            AuctionMapper auctionMapper, BidMapper bidMapper) {
+            AuctionMapper auctionMapper) {
 
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.auctionRepository = auctionRepository;
-        this.bidRepository = bidRepository;
         this.userMapper = userMapper;
         this.productMapper = productMapper;
         this.auctionMapper = auctionMapper;
-        this.bidMapper = bidMapper;
     }
 
     @Override
@@ -69,12 +66,11 @@ public class TestConfig implements CommandLineRunner {
                 userMapper.userRegistrationRequestDTOToUser(createUserSeller),
                 userMapper.userRegistrationRequestDTOToUser(createUserBuyer)));
 
-        User userAdmin = userRepository.findByLogin("Admin123").orElse(null);
         User userSeller = userRepository.findByLogin("seller@gmail.com").orElse(null);
-        User userBuyer = userRepository.findByLogin("Buyer123").orElse(null);
 
         // Criar produtos
         ProductCreateRequestDTO createProduct = new ProductCreateRequestDTO("Produto 1", "Description", null, "Teste");
+
         Product product = productMapper.productCreateRequestDTOToEntity(createProduct);
         product.setSeller(userSeller);
 
@@ -86,8 +82,8 @@ public class TestConfig implements CommandLineRunner {
 
         // Criar leilões
         AuctionCreateRequestDTO createAuction = new AuctionCreateRequestDTO(1L,
-                LocalDateTime.now().plusMinutes(2),
-                LocalDateTime.now().plusMinutes(7), BigDecimal.valueOf(100.0), BigDecimal.valueOf(25.0));
+                LocalDateTime.now().plusSeconds(30),
+                LocalDateTime.now().plusMinutes(3), BigDecimal.valueOf(100.0), BigDecimal.valueOf(25.0));
         product = productRepository.findById(createAuction.productId()).orElse(null);
 
         Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(createAuction);
@@ -100,8 +96,8 @@ public class TestConfig implements CommandLineRunner {
         auction.setCurrentBidder(null);
 
         AuctionCreateRequestDTO createAuction2 = new AuctionCreateRequestDTO(2L,
-                LocalDateTime.now().plusMinutes(2),
-                LocalDateTime.now().plusMinutes(7), BigDecimal.valueOf(25.0), BigDecimal.valueOf(5.0));
+                LocalDateTime.now().plusSeconds(30),
+                LocalDateTime.now().plusMinutes(3), BigDecimal.valueOf(25.0), BigDecimal.valueOf(5.0));
         product2 = productRepository.findById(createAuction2.productId()).orElse(null);
 
         Auction auction2 = auctionMapper.auctionCreateRequestDTOToAuction(createAuction2);
