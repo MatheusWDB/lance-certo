@@ -1,12 +1,10 @@
 package br.com.hematsu.lance_certo.service;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.com.hematsu.lance_certo.dto.user.UserLoginRequestDTO;
 import br.com.hematsu.lance_certo.dto.user.UserRegistrationRequestDTO;
-import br.com.hematsu.lance_certo.dto.user.UserResponseDTO;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.repository.UserRepository;
@@ -16,9 +14,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -37,17 +35,6 @@ public class UserService {
         newUser.setPassword(encodedPassword);
 
         userRepository.save(newUser);
-    }
-
-    public UserResponseDTO userLogin(UserLoginRequestDTO loginDTO) {
-
-        User user = userRepository.findByLogin(loginDTO.login()).orElseThrow(() -> new RuntimeException());
-
-        if (!user.getPassword().equals(loginDTO.password())) {
-            throw new RuntimeException();
-        }
-
-        return userMapper.userToUserResponseDTO(user);
     }
 
     public User findById(Long id) {

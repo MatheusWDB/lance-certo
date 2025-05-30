@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import br.com.hematsu.lance_certo.dto.auction.AuctionCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.product.ProductCreateRequestDTO;
@@ -33,6 +34,7 @@ public class TestConfig implements CommandLineRunner {
     private final UserMapper userMapper;
     private final ProductMapper productMapper;
     private final AuctionMapper auctionMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public TestConfig(
             UserRepository userRepository,
@@ -40,7 +42,8 @@ public class TestConfig implements CommandLineRunner {
             AuctionRepository auctionRepository,
             UserMapper userMapper, 
             ProductMapper productMapper,
-            AuctionMapper auctionMapper) {
+            AuctionMapper auctionMapper,
+            PasswordEncoder passwordEncoder) {
 
         this.userRepository = userRepository;
         this.productRepository = productRepository;
@@ -48,17 +51,18 @@ public class TestConfig implements CommandLineRunner {
         this.userMapper = userMapper;
         this.productMapper = productMapper;
         this.auctionMapper = auctionMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) throws Exception {
 
         // Criar usuários
-        UserRegistrationRequestDTO createUserAdmin = new UserRegistrationRequestDTO("Admin123", "12345678",
+        UserRegistrationRequestDTO createUserAdmin = new UserRegistrationRequestDTO("Admin123", passwordEncoder.encode("12345678"),
                 "admin@gmail.com", "Administrador", UserRole.ADMIN, "79 999999990");
-        UserRegistrationRequestDTO createUserSeller = new UserRegistrationRequestDTO("Seller123", "12345678",
+        UserRegistrationRequestDTO createUserSeller = new UserRegistrationRequestDTO("Seller123", passwordEncoder.encode("12345678"),
                 "seller@gmail.com", "Vendedor", UserRole.SELLER, "79 999999991");
-        UserRegistrationRequestDTO createUserBuyer = new UserRegistrationRequestDTO("Buyer123", "12345678",
+        UserRegistrationRequestDTO createUserBuyer = new UserRegistrationRequestDTO("Buyer123", passwordEncoder.encode("12345678"),
                 "buyer@gmail.com", "Comprador", UserRole.BUYER, "79 999999992");
 
         userRepository.saveAll(List.of(
@@ -83,7 +87,7 @@ public class TestConfig implements CommandLineRunner {
         // Criar leilões
         AuctionCreateRequestDTO createAuction = new AuctionCreateRequestDTO(1L,
                 LocalDateTime.now().plusSeconds(30),
-                LocalDateTime.now().plusMinutes(3), BigDecimal.valueOf(100.0), BigDecimal.valueOf(25.0));
+                LocalDateTime.now().plusMinutes(10), BigDecimal.valueOf(100.0), BigDecimal.valueOf(25.0));
         product = productRepository.findById(createAuction.productId()).orElse(null);
 
         Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(createAuction);
@@ -97,7 +101,7 @@ public class TestConfig implements CommandLineRunner {
 
         AuctionCreateRequestDTO createAuction2 = new AuctionCreateRequestDTO(2L,
                 LocalDateTime.now().plusSeconds(30),
-                LocalDateTime.now().plusMinutes(3), BigDecimal.valueOf(25.0), BigDecimal.valueOf(5.0));
+                LocalDateTime.now().plusMinutes(10), BigDecimal.valueOf(25.0), BigDecimal.valueOf(5.0));
         product2 = productRepository.findById(createAuction2.productId()).orElse(null);
 
         Auction auction2 = auctionMapper.auctionCreateRequestDTOToAuction(createAuction2);

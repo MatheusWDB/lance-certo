@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.hematsu.lance_certo.dto.product.ProductCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.product.ProductResponseDTO;
+import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.service.ProductService;
 import jakarta.validation.Valid;
 
@@ -26,9 +29,12 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @PostMapping("/sellers/{sellerId}")
-    public ResponseEntity<Void> createProduct(@PathVariable Long sellerId,
-            @RequestBody @Valid ProductCreateRequestDTO productDTO) {
+    @PostMapping("/sellers")
+    public ResponseEntity<Void> createProduct(@RequestBody @Valid ProductCreateRequestDTO productDTO) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User authenticatedUser = (User) authentication.getPrincipal();
+        Long sellerId = authenticatedUser.getId();
 
         productService.createProduct(productDTO, sellerId);
         return ResponseEntity.status(HttpStatus.CREATED).build();

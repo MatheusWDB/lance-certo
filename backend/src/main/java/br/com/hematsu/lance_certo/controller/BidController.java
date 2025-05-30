@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.hematsu.lance_certo.dto.bid.BidResponseDTO;
 import br.com.hematsu.lance_certo.dto.bid.PlaceBidRequestDTO;
+import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.service.BidService;
 import jakarta.validation.Valid;
 
@@ -26,16 +29,20 @@ public class BidController {
         this.bidService = bidService;
     }
 
-    @PostMapping("/auctions/{auctionId}/bidders/{bidderId}")
-    public ResponseEntity<Void> placeBid(@PathVariable Long auctionId, @PathVariable Long bidderId, @RequestBody @Valid PlaceBidRequestDTO bidDTO){
+    @PostMapping("/auctions/{auctionId}/bidders")
+    public ResponseEntity<Void> placeBid(@PathVariable Long auctionId, @RequestBody @Valid PlaceBidRequestDTO bidDTO) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User authenticatedUser = (User) authentication.getPrincipal();
+        Long bidderId = authenticatedUser.getId();
 
         bidService.placeBid(auctionId, bidDTO.amount(), bidderId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/auctions/{auctionId}")
-    public ResponseEntity<List<BidResponseDTO>> getBidHistoryForAuction(@PathVariable Long auctionId){
-        
+    public ResponseEntity<List<BidResponseDTO>> getBidHistoryForAuction(@PathVariable Long auctionId) {
+
         List<BidResponseDTO> bids = bidService.getBidHistoryForAuction(auctionId);
         return ResponseEntity.status(HttpStatus.OK).body(bids);
     }
