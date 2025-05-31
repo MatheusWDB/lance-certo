@@ -33,11 +33,12 @@ public class TokenService {
                     .sign(algorithm);
             return token;
         } catch (JWTCreationException e) {
-            throw new RuntimeException("Error while generating token", e);
+            throw new RuntimeException("Erro ao gerar um token: ", e);
         }
     }
 
     public String validateToken(String token) {
+
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.require(algorithm)
@@ -45,8 +46,9 @@ public class TokenService {
                     .build()
                     .verify(token)
                     .getSubject();
+
         } catch (JWTVerificationException e) {
-            throw new JWTVerificationException("Token inválido");
+            throw new JWTVerificationException("Token inválido: ", e);
         }
     }
 

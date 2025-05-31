@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.hematsu.lance_certo.dto.product.ProductCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.product.ProductResponseDTO;
+import br.com.hematsu.lance_certo.exception.ResourceNotFoundException;
 import br.com.hematsu.lance_certo.mapper.ProductMapper;
 import br.com.hematsu.lance_certo.model.Product;
 import br.com.hematsu.lance_certo.model.User;
@@ -27,22 +28,20 @@ public class ProductService {
 
     @Transactional
     public void createProduct(ProductCreateRequestDTO productDTO, Long sellerId) {
-        
+
         User seller = userService.findById(sellerId);
+
         Product product = productMapper.productCreateRequestDTOToEntity(productDTO);
 
         product.setSeller(seller);
 
-        try {
-            productRepository.save(product);
-        } catch (Exception e) {
-            throw new RuntimeException();
-        }
+        productRepository.save(product);
     }
 
     public ProductResponseDTO findById(Long id) {
 
-        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto, com o id: " + id));
         return productMapper.productToProductResponseDTO(product);
     }
 

@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,13 +53,25 @@ public class UserController {
         UsernamePasswordAuthenticationToken loginPassword = new UsernamePasswordAuthenticationToken(
                 loginDTO.login(), loginDTO.password());
 
-        Authentication auth = this.authenticationManager.authenticate(loginPassword);
+        try {
+            Authentication auth = this.authenticationManager.authenticate(loginPassword);
 
-        User user = (User) auth.getPrincipal();
-        String token = tokenService.generateToken((User) auth.getPrincipal());
+            User user = (User) auth.getPrincipal();
+            String token = tokenService.generateToken((User) auth.getPrincipal());
 
-        UserTokenResponseDTO userDTO = new UserTokenResponseDTO(token, userMapper.userToUserResponseDTO(user));
+            UserTokenResponseDTO userDTO = new UserTokenResponseDTO(token, userMapper.userToUserResponseDTO(user));
 
-        return ResponseEntity.status(HttpStatus.OK).body(userDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(userDTO);
+            
+        } catch (AuthenticationException e) {
+            System.err.println("Login failed for user: " + loginDTO.login() + " - " + e.getMessage());
+            throw e;
+
+        } catch (Exception e) {
+            System.err.println("Unexpected error during login: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+
     }
 }

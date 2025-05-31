@@ -7,22 +7,22 @@ import jakarta.validation.constraints.Size;
 
 public record UserRegistrationRequestDTO(
 
-        @NotBlank(message = "Username is required") 
-        @Size(min = 4, max = 50, message = "Username must be between 4 and 50 characters") 
+        @NotBlank(message = "Username é obrigatório!") 
+        @Size(min = 4, max = 50, message = "Username precisa ter entre 4 e 50 caracteres") 
         String username,
 
-        @NotBlank(message = "Password is required") 
-        @Size(min = 8, message = "Password must be at least 8 characters long") 
+        @NotBlank(message = "Password é obrigatório!") 
+        @Size(min = 8, message = "Password precisa ter no mínimo 8 caracteres") 
         String password,
 
-        @NotBlank(message = "Email is required") 
-        @Email(message = "Invalid email format") 
+        @NotBlank(message = "Email é obrigatório!") 
+        @Email(message = "Formato de email inválido") 
         String email,
 
-        @NotBlank(message = "Name is required") 
+        @NotBlank(message = "Name é obrigatório!") 
         String name,
 
         UserRole role,
 
-        @NotBlank(message = "Phone is required") String phone) {
+        @NotBlank(message = "Phone é obrigatório!") String phone) {
 }

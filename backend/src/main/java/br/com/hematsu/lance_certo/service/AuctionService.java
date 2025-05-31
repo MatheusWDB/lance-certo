@@ -11,6 +11,10 @@ import org.springframework.stereotype.Service;
 import br.com.hematsu.lance_certo.dto.auction.AuctionCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.auction.AuctionDetailsResponseDTO;
 import br.com.hematsu.lance_certo.dto.product.ProductResponseDTO;
+import br.com.hematsu.lance_certo.exception.ResourceNotFoundException;
+import br.com.hematsu.lance_certo.exception.auction.AuctionCannotBeCancelledException;
+import br.com.hematsu.lance_certo.exception.auction.NotAuctionOwnerException;
+import br.com.hematsu.lance_certo.exception.auction.ProductAlreadyInAuctionException;
 import br.com.hematsu.lance_certo.mapper.AuctionMapper;
 import br.com.hematsu.lance_certo.mapper.ProductMapper;
 import br.com.hematsu.lance_certo.model.Auction;
@@ -48,8 +52,23 @@ public class AuctionService {
     @Transactional
     public void createAuction(AuctionCreateRequestDTO auctionDTO, Long sellerId) {
 
-        ProductResponseDTO product = productService.findById(auctionDTO.productId());
         User seller = userService.findById(sellerId);
+
+        List<Auction> existingAuctionForProduct = auctionRepository.findByProductId(auctionDTO.productId());
+
+        if (!existingAuctionForProduct.isEmpty()) {
+
+            existingAuctionForProduct.forEach(auction -> {
+                if (auction.getStatus() == AuctionStatus.PENDING ||
+                        auction.getStatus() == AuctionStatus.ACTIVE) {
+
+                    throw new ProductAlreadyInAuctionException();
+                }
+            });
+
+        }
+
+        ProductResponseDTO product = productService.findById(auctionDTO.productId());
 
         Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(auctionDTO);
         auction.setSeller(seller);
@@ -63,21 +82,13 @@ public class AuctionService {
         auctionRepository.save(auction);
     }
 
-    public Auction findById(Long auctionId) {
-
-        return auctionRepository.findById(auctionId).orElseThrow(() -> new RuntimeException());
-    }
-
-    public AuctionDetailsResponseDTO findAuctionDetailsById(Long auctionId) {
-
-        Auction auction = auctionRepository.findById(auctionId).orElseThrow(() -> new RuntimeException());
-
-        return auctionMapper.auctionToAuctionDetailsResponseDTO(auction);
+    public Auction findById(Long id) {
+        return auctionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Leilão, com o id: " + id));
     }
 
     @Transactional
     public void save(Auction auction) {
-
         auctionRepository.save(auction);
     }
 
@@ -136,13 +147,16 @@ public class AuctionService {
     @Transactional
     public AuctionDetailsResponseDTO cancelAuction(Long auctionId, Long sellerId) {
 
-        Auction auction = auctionRepository.findById(auctionId).orElseThrow(() -> new RuntimeException());
+        User seller = userService.findById(sellerId);
 
-        if (!auction.getSeller().getId().equals(sellerId) ||
-                !auction.getStatus().equals(AuctionStatus.PENDING) ||
-                !auction.getBids().isEmpty()) {
+        Auction auction = findById(auctionId);
 
-            throw new RuntimeException();
+        if (!auction.getSeller().equals(seller)) {
+            throw new NotAuctionOwnerException();
+        }
+
+        if (!auction.getStatus().equals(AuctionStatus.PENDING) || !auction.getBids().isEmpty()) {
+            throw new AuctionCannotBeCancelledException();
         }
 
         auction.setStatus(AuctionStatus.CANCELLED);

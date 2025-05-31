@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.hematsu.lance_certo.dto.user.UserRegistrationRequestDTO;
+import br.com.hematsu.lance_certo.exception.ResourceNotFoundException;
+import br.com.hematsu.lance_certo.exception.user.UserAlreadyExistsException;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.repository.UserRepository;
@@ -26,7 +28,7 @@ public class UserService {
     public void registerUser(UserRegistrationRequestDTO registrationDTO) {
 
         if (doesUsernameOrEmailAlreadyExist(registrationDTO.username(), registrationDTO.email())) {
-            throw new RuntimeException("User with this email or username already exists");
+            throw new UserAlreadyExistsException();
         }
 
         User newUser = userMapper.userRegistrationRequestDTOToUser(registrationDTO);
@@ -38,7 +40,7 @@ public class UserService {
     }
 
     public User findById(Long id) {
-        return userRepository.findById(id).orElseThrow(() -> new RuntimeException());
+        return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuário, com o id: " + id));
     }
 
     public Boolean doesUsernameOrEmailAlreadyExist(String username, String email) {

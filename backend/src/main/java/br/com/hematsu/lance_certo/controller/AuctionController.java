@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.hematsu.lance_certo.dto.auction.AuctionCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.auction.AuctionDetailsResponseDTO;
+import br.com.hematsu.lance_certo.mapper.AuctionMapper;
+import br.com.hematsu.lance_certo.model.Auction;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.service.AuctionService;
 import jakarta.validation.Valid;
@@ -23,9 +25,11 @@ import jakarta.validation.Valid;
 public class AuctionController {
 
     private final AuctionService auctionService;
+    private final AuctionMapper auctionMapper;
 
-    public AuctionController(AuctionService auctionService) {
+    public AuctionController(AuctionService auctionService, AuctionMapper auctionMapper) {
         this.auctionService = auctionService;
+        this.auctionMapper = auctionMapper;
     }
 
     @PostMapping("/sellers")
@@ -42,8 +46,9 @@ public class AuctionController {
     @GetMapping("/{id}")
     public ResponseEntity<AuctionDetailsResponseDTO> getAuctionDetailsById(@PathVariable Long id) {
 
-        AuctionDetailsResponseDTO auction = auctionService.findAuctionDetailsById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(auction);
+        Auction auction = auctionService.findById(id);
+        
+        return ResponseEntity.status(HttpStatus.OK).body(auctionMapper.auctionToAuctionDetailsResponseDTO(auction));
     }
 
     @PutMapping("{id}/cancel")

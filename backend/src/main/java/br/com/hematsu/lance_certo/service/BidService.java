@@ -8,6 +8,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import br.com.hematsu.lance_certo.dto.bid.BidResponseDTO;
+import br.com.hematsu.lance_certo.exception.bid.InvalidBidException;
 import br.com.hematsu.lance_certo.mapper.BidMapper;
 import br.com.hematsu.lance_certo.model.Auction;
 import br.com.hematsu.lance_certo.model.AuctionStatus;
@@ -46,21 +47,21 @@ public class BidService {
         User bidder = userService.findById(bidderId);
 
         if (!auction.getStatus().equals(AuctionStatus.ACTIVE)) {
-            throw new RuntimeException("O leilão não está ativo");
+            throw new InvalidBidException("O leilão ainda não iniciou!");
         }
         if (!auction.getEndTime().isAfter(LocalDateTime.now())) {
-            throw new RuntimeException("O leilão já encerrou");
+            throw new InvalidBidException("O leilão já encerrou!");
         }
         if (auction.getSeller().equals(bidder)) {
-            throw new RuntimeException("O vendedor não pode dá lance no próprio leilão");
+            throw new InvalidBidException("O vendedor não pode dá lance no próprio leilão!");
         }
         if (amount.compareTo(auction.getInitialPrice().add(auction.getMinimunBidIncrement())) < 0) {
-            throw new RuntimeException(
-                    "O lance não pode ser menor do quê a soma do preço inicial mais o incremento mínimo");
+            throw new InvalidBidException(
+                    "O lance não pode ser menor do quê a soma do preço inicial mais o incremento mínimo!");
         }
         if (amount.compareTo(auction.getCurrentBid().add(auction.getMinimunBidIncrement())) < 0) {
-            throw new RuntimeException(
-                    "O lance não pode ser menor do quê a soma do do lance atual mais o incremento mínimo");
+            throw new InvalidBidException(
+                    "O lance não pode ser menor do quê a soma do lance atual mais o incremento mínimo!");
         }
 
         Bid bid = new Bid(auction, bidder, amount);

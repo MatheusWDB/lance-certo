@@ -18,11 +18,18 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import br.com.hematsu.lance_certo.exception.CustomAccessDeniedHandler;
+import br.com.hematsu.lance_certo.exception.CustomAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -67,9 +74,11 @@ public class SecurityConfig {
         };
 
         private final SecurityFilter securityFilter;
+        private final ObjectMapper objectMapper;
 
-        public SecurityConfig(SecurityFilter securityFilter) {
+        public SecurityConfig(SecurityFilter securityFilter, ObjectMapper objectMapper) {
                 this.securityFilter = securityFilter;
+                this.objectMapper = objectMapper;
         }
 
         @Bean
@@ -109,7 +118,20 @@ public class SecurityConfig {
                                                                 .hasRole("SELLER")
                                                                 .anyRequest().authenticated())
                                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                                .exceptionHandling(exception -> exception
+                                                .authenticationEntryPoint(customAuthenticationEntryPoint())
+                                                .accessDeniedHandler(customAccessDeniedHandler()))
                                 .build();
+        }
+
+        @Bean
+        public AuthenticationEntryPoint customAuthenticationEntryPoint() {
+                return new CustomAuthenticationEntryPoint(objectMapper);
+        }
+
+        @Bean
+        public AccessDeniedHandler customAccessDeniedHandler() {
+                return new CustomAccessDeniedHandler(objectMapper);
         }
 
         @Bean
