@@ -28,93 +28,120 @@ import br.com.hematsu.lance_certo.repository.UserRepository;
 @Profile("test")
 public class TestConfig implements CommandLineRunner {
 
-    private final UserRepository userRepository;
-    private final ProductRepository productRepository;
-    private final AuctionRepository auctionRepository;
-    private final UserMapper userMapper;
-    private final ProductMapper productMapper;
-    private final AuctionMapper auctionMapper;
-    private final PasswordEncoder passwordEncoder;
+        private final UserRepository userRepository;
+        private final ProductRepository productRepository;
+        private final AuctionRepository auctionRepository;
+        private final UserMapper userMapper;
+        private final ProductMapper productMapper;
+        private final AuctionMapper auctionMapper;
+        private final PasswordEncoder passwordEncoder;
 
-    public TestConfig(
-            UserRepository userRepository,
-            ProductRepository productRepository,
-            AuctionRepository auctionRepository,
-            UserMapper userMapper, 
-            ProductMapper productMapper,
-            AuctionMapper auctionMapper,
-            PasswordEncoder passwordEncoder) {
+        public TestConfig(
+                        UserRepository userRepository,
+                        ProductRepository productRepository,
+                        AuctionRepository auctionRepository,
+                        UserMapper userMapper,
+                        ProductMapper productMapper,
+                        AuctionMapper auctionMapper,
+                        PasswordEncoder passwordEncoder) {
 
-        this.userRepository = userRepository;
-        this.productRepository = productRepository;
-        this.auctionRepository = auctionRepository;
-        this.userMapper = userMapper;
-        this.productMapper = productMapper;
-        this.auctionMapper = auctionMapper;
-        this.passwordEncoder = passwordEncoder;
-    }
+                this.userRepository = userRepository;
+                this.productRepository = productRepository;
+                this.auctionRepository = auctionRepository;
+                this.userMapper = userMapper;
+                this.productMapper = productMapper;
+                this.auctionMapper = auctionMapper;
+                this.passwordEncoder = passwordEncoder;
+        }
 
-    @Override
-    public void run(String... args) throws Exception {
+        @Override
+        public void run(String... args) throws Exception {
 
-        // Criar usuários
-        UserRegistrationRequestDTO createUserAdmin = new UserRegistrationRequestDTO("Admin123", passwordEncoder.encode("12345678"),
-                "admin@gmail.com", "Administrador", UserRole.ADMIN, "79 999999990");
-        UserRegistrationRequestDTO createUserSeller = new UserRegistrationRequestDTO("Seller123", passwordEncoder.encode("12345678"),
-                "seller@gmail.com", "Vendedor", UserRole.SELLER, "79 999999991");
-        UserRegistrationRequestDTO createUserBuyer = new UserRegistrationRequestDTO("Buyer123", passwordEncoder.encode("12345678"),
-                "buyer@gmail.com", "Comprador", UserRole.BUYER, "79 999999992");
+                // Criar usuários
+                UserRegistrationRequestDTO createUserAdmin = new UserRegistrationRequestDTO(
+                                "Admin123",
+                                passwordEncoder.encode("12345678"),
+                                "admin@gmail.com",
+                                "Administrador",
+                                UserRole.ADMIN,
+                                "79 999999990");
 
-        userRepository.saveAll(List.of(
-                userMapper.userRegistrationRequestDTOToUser(createUserAdmin),
-                userMapper.userRegistrationRequestDTOToUser(createUserSeller),
-                userMapper.userRegistrationRequestDTOToUser(createUserBuyer)));
+                UserRegistrationRequestDTO createUserSeller = new UserRegistrationRequestDTO(
+                                "Seller123",
+                                passwordEncoder.encode("12345678"),
+                                "seller@gmail.com",
+                                "Vendedor",
+                                UserRole.SELLER,
+                                "79 999999991");
 
-        User userSeller = userRepository.findByLogin("seller@gmail.com").orElse(null);
+                UserRegistrationRequestDTO createUserBuyer = new UserRegistrationRequestDTO(
+                                "Buyer123",
+                                passwordEncoder.encode("12345678"),
+                                "buyer@gmail.com",
+                                "Comprador",
+                                UserRole.BUYER,
+                                "79 999999992");
 
-        // Criar produtos
-        ProductCreateRequestDTO createProduct = new ProductCreateRequestDTO("Produto 1", "Description", null, "Teste");
+                userRepository.saveAll(List.of(
+                                userMapper.userRegistrationRequestDTOToUser(createUserAdmin),
+                                userMapper.userRegistrationRequestDTOToUser(createUserSeller),
+                                userMapper.userRegistrationRequestDTOToUser(createUserBuyer)));
 
-        Product product = productMapper.productCreateRequestDTOToEntity(createProduct);
-        product.setSeller(userSeller);
+                User userSeller = userRepository.findByLogin("seller@gmail.com").orElse(null);
 
-        ProductCreateRequestDTO createProduct2 = new ProductCreateRequestDTO("Produto 2", "Description", null, "Teste");
-        Product product2 = productMapper.productCreateRequestDTOToEntity(createProduct2);
-        product2.setSeller(userSeller);
+                // Criar produtos
+                ProductCreateRequestDTO createProduct = new ProductCreateRequestDTO("Produto 1", "Description", null,
+                                "Teste");
 
-        productRepository.saveAll(List.of(product, product2));
+                Product product = productMapper.productCreateRequestDTOToEntity(createProduct);
+                product.setSeller(userSeller);
 
-        // Criar leilões
-        AuctionCreateRequestDTO createAuction = new AuctionCreateRequestDTO(1L,
-                LocalDateTime.now().plusSeconds(30),
-                LocalDateTime.now().plusMinutes(10), BigDecimal.valueOf(100.0), BigDecimal.valueOf(25.0));
-        product = productRepository.findById(createAuction.productId()).orElse(null);
+                ProductCreateRequestDTO createProduct2 = new ProductCreateRequestDTO("Produto 2", "Description", null,
+                                "Teste");
+                Product product2 = productMapper.productCreateRequestDTOToEntity(createProduct2);
+                product2.setSeller(userSeller);
 
-        Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(createAuction);
-        auction.setSeller(userSeller);
-        auction.setProduct(product);
-        auction.setStatus(AuctionStatus.PENDING);
-        auction.setInitialPrice(createAuction.initialPrice());
-        auction.setMinimunBidIncrement(createAuction.minimunBidIncrement());
-        auction.setCurrentBid(BigDecimal.ZERO);
-        auction.setCurrentBidder(null);
+                productRepository.saveAll(List.of(product, product2));
 
-        AuctionCreateRequestDTO createAuction2 = new AuctionCreateRequestDTO(2L,
-                LocalDateTime.now().plusSeconds(30),
-                LocalDateTime.now().plusMinutes(10), BigDecimal.valueOf(25.0), BigDecimal.valueOf(5.0));
-        product2 = productRepository.findById(createAuction2.productId()).orElse(null);
+                // Criar leilões
+                AuctionCreateRequestDTO createAuction = new AuctionCreateRequestDTO(
+                                1L,
+                                LocalDateTime.now().plusSeconds(30),
+                                LocalDateTime.now().plusMinutes(10),
+                                BigDecimal.valueOf(100.0),
+                                BigDecimal.valueOf(25.0));
 
-        Auction auction2 = auctionMapper.auctionCreateRequestDTOToAuction(createAuction2);
-        auction2.setSeller(userSeller);
-        auction2.setProduct(product2);
-        auction2.setStatus(AuctionStatus.PENDING);
-        auction2.setInitialPrice(createAuction2.initialPrice());
-        auction2.setMinimunBidIncrement(createAuction2.minimunBidIncrement());
-        auction2.setCurrentBid(BigDecimal.ZERO);
-        auction2.setCurrentBidder(null);
+                product = productRepository.findById(createAuction.productId()).orElse(null);
 
-        auctionRepository.saveAll(List.of(auction, auction2));
+                Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(createAuction);
+                auction.setSeller(userSeller);
+                auction.setProduct(product);
+                auction.setStatus(AuctionStatus.PENDING);
+                auction.setInitialPrice(createAuction.initialPrice());
+                auction.setMinimunBidIncrement(createAuction.minimunBidIncrement());
+                auction.setCurrentBid(BigDecimal.ZERO);
+                auction.setCurrentBidder(null);
 
-    }
+                AuctionCreateRequestDTO createAuction2 = new AuctionCreateRequestDTO(
+                                2L,
+                                LocalDateTime.now().plusSeconds(30),
+                                LocalDateTime.now().plusMinutes(10),
+                                BigDecimal.valueOf(25.0),
+                                BigDecimal.valueOf(5.0));
+
+                product2 = productRepository.findById(createAuction2.productId()).orElse(null);
+
+                Auction auction2 = auctionMapper.auctionCreateRequestDTOToAuction(createAuction2);
+                auction2.setSeller(userSeller);
+                auction2.setProduct(product2);
+                auction2.setStatus(AuctionStatus.PENDING);
+                auction2.setInitialPrice(createAuction2.initialPrice());
+                auction2.setMinimunBidIncrement(createAuction2.minimunBidIncrement());
+                auction2.setCurrentBid(BigDecimal.ZERO);
+                auction2.setCurrentBidder(null);
+
+                auctionRepository.saveAll(List.of(auction, auction2));
+
+        }
 
 }
