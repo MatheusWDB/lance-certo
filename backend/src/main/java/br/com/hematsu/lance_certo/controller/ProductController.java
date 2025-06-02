@@ -4,53 +4,84 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.hematsu.lance_certo.dto.product.ProductCreateRequestDTO;
+import br.com.hematsu.lance_certo.dto.product.ProductRequestDTO;
 import br.com.hematsu.lance_certo.dto.product.ProductResponseDTO;
+import br.com.hematsu.lance_certo.mapper.ProductMapper;
+import br.com.hematsu.lance_certo.model.Product;
 import br.com.hematsu.lance_certo.model.User;
+import br.com.hematsu.lance_certo.service.AuthenticationService;
 import br.com.hematsu.lance_certo.service.ProductService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/api")
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductMapper productMapper;
+    private final AuthenticationService authenticationService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, ProductMapper productMapper,
+            AuthenticationService authenticationService) {
         this.productService = productService;
+        this.productMapper = productMapper;
+        this.authenticationService = authenticationService;
     }
 
-    @PostMapping("/sellers")
-    public ResponseEntity<Void> createProduct(@RequestBody @Valid ProductCreateRequestDTO productDTO) {
+    @PostMapping("/products/create/sellers")
+    public ResponseEntity<Void> createProducts(@RequestBody @Valid ProductRequestDTO body) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User authenticatedUser = (User) authentication.getPrincipal();
-        Long sellerId = authenticatedUser.getId();
+        Long sellerId = authenticationService.getIdByAuthentication();
+        productService.createProduct(body, sellerId);
 
-        productService.createProduct(productDTO, sellerId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable Long id) {
+    @GetMapping("/products")
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByNameOrCategory(
+            @RequestParam(name = "name", defaultValue = "") String paramName,
+            @RequestParam(name = "category", defaultValue = "") String paramCategory) {
 
-        ProductResponseDTO product = productService.findById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(product);
+        if (paramName.isBlank() && paramCategory.isBlank()) {
+            throw new IllegalArgumentException("Pelo menos um dos parâmetros precisa ter um valor.");
+        }
+
+        List<ProductResponseDTO> products = productService.findByNameOrCategory(paramName, paramCategory);
+        return ResponseEntity.status(HttpStatus.OK).body(products);
     }
 
-    @GetMapping("/sellers/{sellerId}")
-    public ResponseEntity<List<ProductResponseDTO>> getProductsBySeller(@PathVariable Long sellerId) {
+    @GetMapping("/products/seller")
+    public ResponseEntity<List<ProductResponseDTO>> getProductsBySeller(
+            @RequestParam(name = "seller", required = true) String param) {
+
+        User seller = (User) authenticationService.loadUserByUsername(param);
+        Long sellerId = seller.getId();
 
         List<ProductResponseDTO> products = productService.findProductsBySeller(sellerId);
         return ResponseEntity.status(HttpStatus.OK).body(products);
+    }
+
+    @PatchMapping("/products/{id}/update")
+    public ResponseEntity<ProductResponseDTO> updateProduct(
+            @PathVariable Long id,
+            @RequestBody ProductRequestDTO body) {
+
+        Product product = productService.findById(id);
+        product.setCategory(body.category());
+        product.setName(body.name());
+        product.setImageUrl(body.imageUrl());
+        product.setDescription(body.description());
+
+        product = productService.save(product);
+        return ResponseEntity.status(HttpStatus.OK).body(productMapper.productToProductResponseDTO(product));
     }
 }

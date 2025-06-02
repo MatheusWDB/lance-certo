@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import br.com.hematsu.lance_certo.dto.product.ProductCreateRequestDTO;
+import br.com.hematsu.lance_certo.dto.product.ProductRequestDTO;
 import br.com.hematsu.lance_certo.dto.product.ProductResponseDTO;
 import br.com.hematsu.lance_certo.exception.ResourceNotFoundException;
 import br.com.hematsu.lance_certo.mapper.ProductMapper;
@@ -27,27 +27,36 @@ public class ProductService {
     }
 
     @Transactional
-    public void createProduct(ProductCreateRequestDTO productDTO, Long sellerId) {
+    public void createProduct(ProductRequestDTO productDTO, Long sellerId) {
 
         User seller = userService.findById(sellerId);
 
-        Product product = productMapper.productCreateRequestDTOToEntity(productDTO);
+        Product product = productMapper.productRequestDTOToEntity(productDTO);
 
         product.setSeller(seller);
 
-        productRepository.save(product);
+        save(product);
     }
 
-    public ProductResponseDTO findById(Long id) {
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Produto, com o id: " + id));
-        return productMapper.productToProductResponseDTO(product);
+    public Product findById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto, com o id: " + id));        
     }
 
     public List<ProductResponseDTO> findProductsBySeller(Long sellerId) {
 
         List<Product> products = productRepository.findBySellerId(sellerId);
         return products.stream().map(product -> productMapper.productToProductResponseDTO(product)).toList();
+    }
+
+    public List<ProductResponseDTO> findByNameOrCategory(String name, String category) {
+
+        List<Product> products = productRepository.findByNameAndCategory(name, category);
+        return products.stream().map(productMapper::productToProductResponseDTO).toList();
+    }
+
+    @Transactional
+    public Product save(Product product) {
+        return productRepository.save(product);
     }
 }

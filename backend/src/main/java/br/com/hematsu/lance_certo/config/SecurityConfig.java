@@ -56,8 +56,8 @@ public class SecurityConfig {
         };
 
         private static final String[] PUBLIC_GET_MATCHERS = {
-                        "/products/{id}",
-                        "/products/sellers/{sellerId}",
+                        "/api/products",
+                        "/api/products/seller",
                         "/auctions/{id}",
                         "/auctions/active",
                         "/auctions/search",
@@ -65,11 +65,12 @@ public class SecurityConfig {
         };
 
         private static final String[] SELLER_POST_MATCHERS = {
-                        "/products/sellers",
+                        "/api/products/create/sellers",
                         "/auctions/sellers"
         };
 
         private static final String[] SELLER_PATCH_MATCHERS = {
+                        "/api/products/{id}/update",
                         "/auctions/{id}/cancel"
         };
 

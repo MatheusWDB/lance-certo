@@ -109,6 +109,17 @@ public class GlobalExceptionHandler {
         StandardError err = new StandardError(status, error, message, request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }
+    
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<StandardError> illegalArgumentException(
+            IllegalArgumentException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        String error = status.getReasonPhrase();
+        String message = e.getMessage();
+
+        StandardError err = new StandardError(status, error, message, request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<StandardError> methodArgumentNotValidException(MethodArgumentNotValidException e,

@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import br.com.hematsu.lance_certo.dto.auction.AuctionCreateRequestDTO;
-import br.com.hematsu.lance_certo.dto.product.ProductCreateRequestDTO;
+import br.com.hematsu.lance_certo.dto.product.ProductRequestDTO;
 import br.com.hematsu.lance_certo.dto.user.UserRegistrationRequestDTO;
 import br.com.hematsu.lance_certo.mapper.AuctionMapper;
 import br.com.hematsu.lance_certo.mapper.ProductMapper;
@@ -90,15 +90,15 @@ public class TestConfig implements CommandLineRunner {
                 User userSeller = userRepository.findByLogin("seller@gmail.com").orElse(null);
 
                 // Criar produtos
-                ProductCreateRequestDTO createProduct = new ProductCreateRequestDTO("Produto 1", "Description", null,
+                ProductRequestDTO createProduct = new ProductRequestDTO("Produto 1", "Description", null,
                                 "Teste");
 
-                Product product = productMapper.productCreateRequestDTOToEntity(createProduct);
+                Product product = productMapper.productRequestDTOToEntity(createProduct);
                 product.setSeller(userSeller);
 
-                ProductCreateRequestDTO createProduct2 = new ProductCreateRequestDTO("Produto 2", "Description", null,
+                ProductRequestDTO createProduct2 = new ProductRequestDTO("Produto 2", "Description", null,
                                 "Teste");
-                Product product2 = productMapper.productCreateRequestDTOToEntity(createProduct2);
+                Product product2 = productMapper.productRequestDTOToEntity(createProduct2);
                 product2.setSeller(userSeller);
 
                 productRepository.saveAll(List.of(product, product2));
