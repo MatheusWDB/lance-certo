@@ -36,11 +36,16 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(registrationDTO.password());
         newUser.setPassword(encodedPassword);
 
-        userRepository.save(newUser);
+        save(newUser);
     }
 
     public User findById(Long id) {
         return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuário, com o id: " + id));
+    }
+
+    @Transactional
+    public User save(User user){
+        return userRepository.save(user);
     }
 
     public Boolean doesUsernameOrEmailAlreadyExist(String username, String email) {

@@ -51,8 +51,8 @@ public class SecurityConfig {
         };
 
         private static final String[] PUBLIC_POST_MATCHERS = {
-                        "/users/login",
-                        "/users/register"
+                        "/api/users/login",
+                        "/api/users/register"
         };
 
         private static final String[] PUBLIC_GET_MATCHERS = {
@@ -69,8 +69,12 @@ public class SecurityConfig {
                         "/auctions/sellers"
         };
 
-        private static final String[] SELLER_PUT_MATCHERS = {
+        private static final String[] SELLER_PATCH_MATCHERS = {
                         "/auctions/{id}/cancel"
+        };
+
+        private static final String[] ADMIN_GET_MATCHERS = {
+                        "/api/user"
         };
 
         private final SecurityFilter securityFilter;
@@ -112,9 +116,11 @@ public class SecurityConfig {
                                                                 .permitAll()
                                                                 .requestMatchers(HttpMethod.GET, PUBLIC_GET_MATCHERS)
                                                                 .permitAll()
+                                                                .requestMatchers(HttpMethod.GET, ADMIN_GET_MATCHERS)
+                                                                .hasRole("ADMIN")
                                                                 .requestMatchers(HttpMethod.POST, SELLER_POST_MATCHERS)
                                                                 .hasRole("SELLER")
-                                                                .requestMatchers(HttpMethod.PUT, SELLER_PUT_MATCHERS)
+                                                                .requestMatchers(HttpMethod.PUT, SELLER_PATCH_MATCHERS)
                                                                 .hasRole("SELLER")
                                                                 .anyRequest().authenticated())
                                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
