@@ -27,7 +27,7 @@ CREATE TABLE
 CREATE TABLE
     tb_auctions (
         id BIGSERIAL PRIMARY KEY,
-        product_id BIGINT NOT NULL UNIQUE,
+        product_id BIGINT NOT NULL,
         seller_id BIGINT NOT NULL,
         start_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
         end_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
