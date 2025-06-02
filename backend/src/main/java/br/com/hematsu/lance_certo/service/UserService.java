@@ -1,6 +1,9 @@
 package br.com.hematsu.lance_certo.service;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +19,16 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            UserMapper userMapper,
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager) {
+                
+        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -33,7 +43,7 @@ public class UserService {
 
         User newUser = userMapper.userRegistrationRequestDTOToUser(registrationDTO);
 
-        String encodedPassword = passwordEncoder.encode(registrationDTO.password());
+        String encodedPassword = encodePassword(registrationDTO.password());
         newUser.setPassword(encodedPassword);
 
         save(newUser);
@@ -43,8 +53,12 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuário, com o id: " + id));
     }
 
+    public String encodePassword(String password) {
+        return passwordEncoder.encode(password);
+    }
+
     @Transactional
-    public User save(User user){
+    public User save(User user) {
         return userRepository.save(user);
     }
 
@@ -54,5 +68,11 @@ public class UserService {
         }
 
         return false;
+    }
+
+    public Authentication authenticate(String login, String password) {
+
+        UsernamePasswordAuthenticationToken loginPassword = new UsernamePasswordAuthenticationToken(login, password);
+        return this.authenticationManager.authenticate(loginPassword);
     }
 }
