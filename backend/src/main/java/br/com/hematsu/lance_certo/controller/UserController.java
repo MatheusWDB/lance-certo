@@ -84,7 +84,7 @@ public class UserController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<UserResponseDTO> findByUsernameOrEmail(
+    public ResponseEntity<UserResponseDTO> getByUsernameOrEmail(
             @RequestParam(name = "login", required = true) String login) {
 
         User user = (User) authenticationService.loadUserByUsername(login);
