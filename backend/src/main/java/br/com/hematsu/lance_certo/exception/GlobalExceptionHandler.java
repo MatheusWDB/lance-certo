@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -86,11 +87,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(err);
     }
 
-     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<StandardError> handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
-        HttpStatus status = HttpStatus.FORBIDDEN; // 403 Forbidden
-        String error = status.getReasonPhrase(); // "Forbidden"
-        String message = "Access Denied: You do not have permission to access this resource."; 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<StandardError> handleAccessDeniedException(AccessDeniedException e,
+            HttpServletRequest request) {
+        HttpStatus status = HttpStatus.FORBIDDEN;
+        String error = status.getReasonPhrase();
+        String message = "Access Denied: You do not have permission to access this resource.";
+
+        StandardError err = new StandardError(status, error, message, request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<StandardError> missingServletRequestParameterException(
+            MissingServletRequestParameterException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        String error = status.getReasonPhrase();
+        String parameterName = e.getParameterName();
+        String message = "O parâmetro '" + parameterName + "' é obrigatório.";
 
         StandardError err = new StandardError(status, error, message, request.getRequestURI());
         return ResponseEntity.status(status).body(err);
