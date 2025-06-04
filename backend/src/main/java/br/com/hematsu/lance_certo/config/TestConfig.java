@@ -1,8 +1,11 @@
 package br.com.hematsu.lance_certo.config;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -90,58 +93,82 @@ public class TestConfig implements CommandLineRunner {
                 User userSeller = userRepository.findByLogin("seller@gmail.com").orElse(null);
 
                 // Criar produtos
-                ProductRequestDTO createProduct = new ProductRequestDTO("Produto 1", "Description", null,
-                                "Teste");
+                List<Product> createdProducts = new ArrayList<>();
 
-                Product product = productMapper.productRequestDTOToEntity(createProduct);
-                product.setSeller(userSeller);
+                String[] productNames = {
+                                "Vinho Envelhecido Reserva", "Fones de Ouvido Premium X1", "Livro 'O Código Secreto'",
+                                "Guitarra Elétrica Vintage", "Smartwatch Ultra", "Tênis de Corrida Aerodinâmico",
+                                "Máquina de Café Espresso Pro", "Mochila de Viagem Confort", "Console Retrô GigaPlay",
+                                "Kit de Pintura a Óleo Profissional", "Bicicleta Mountain Trail", "Drone com Câmera 4K",
+                                "Relógio de Pulso Clássico", "Coleção de Moedas Raras", "Cadeira Gamer Ergonômica"
+                };
+                String[] categories = {
+                                "Bebidas", "Eletrônicos", "Livros", "Instrumentos Musicais", "Wearables", "Esportes",
+                                "Cozinha", "Acessórios", "Games", "Arte", "Ciclismo", "Drones",
+                                "Joias e Relógios", "Colecionáveis", "Móveis"
+                };
+                String[] descriptions = {
+                                "Safra especial, sabor único.", "Áudio imersivo e cancelamento de ruído.",
+                                "Um thriller que prende do início ao fim.",
+                                "Som autêntico dos anos 70.", "Mantenha-se conectado e em forma.",
+                                "Desempenho e conforto em cada passo.",
+                                "Café perfeito com um toque.", "Ideal para aventuras e o dia a dia.",
+                                "Reviva os clássicos com estilo.",
+                                "Cores vibrantes para sua arte.", "Supere trilhas com confiança.",
+                                "Perspectivas aéreas incríveis.",
+                                "Elegância e precisão.", "Tesouros de diferentes épocas.",
+                                "Conforto supremo para longas sessões."
+                };
 
-                ProductRequestDTO createProduct2 = new ProductRequestDTO("Produto 2", "Description", null,
-                                "Teste");
-                Product product2 = productMapper.productRequestDTOToEntity(createProduct2);
-                product2.setSeller(userSeller);
-
-                productRepository.saveAll(List.of(product, product2));
+                for (int i = 0; i < 15; i++) {
+                        ProductRequestDTO productDto = new ProductRequestDTO(
+                                        productNames[i],
+                                        descriptions[i],
+                                        null,
+                                        categories[i]);
+                        Product product = productMapper.productRequestDTOToEntity(productDto);
+                        product.setSeller(userSeller);
+                        createdProducts.add(product);
+                }
+                createdProducts = productRepository.saveAll(createdProducts);
 
                 // Criar leilões
-                AuctionCreateRequestDTO createAuction = new AuctionCreateRequestDTO(
-                                1L,
-                                LocalDateTime.now().plusSeconds(30),
-                                LocalDateTime.now().plusMinutes(10),
-                                BigDecimal.valueOf(100.0),
-                                BigDecimal.valueOf(25.0));
+                List<Auction> createdAuctions = new ArrayList<>();
 
-                product = productRepository.findById(createAuction.productId()).orElse(null);
+                LocalDateTime fixedStartTime = LocalDateTime.now().plusSeconds(30);
+                LocalDateTime fixedEndTime = LocalDateTime.now().plusMinutes(10);
+                BigDecimal fixedCurrentBid = BigDecimal.ZERO;
+                User fixedCurrentBidder = null;
+                AuctionStatus fixedStatus = AuctionStatus.PENDING;
 
-                Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(createAuction);
-                auction.setSeller(userSeller);
-                auction.setProduct(product);
-                auction.setStatus(AuctionStatus.PENDING);
-                auction.setInitialPrice(createAuction.initialPrice());
-                auction.setMinimunBidIncrement(createAuction.minimunBidIncrement());
-                auction.setCurrentBid(BigDecimal.ZERO);
-                auction.setCurrentBidder(null);
+                for (int i = 0; i < 15; i++) {
 
-                AuctionCreateRequestDTO createAuction2 = new AuctionCreateRequestDTO(
-                                2L,
-                                LocalDateTime.now().plusSeconds(30),
-                                LocalDateTime.now().plusMinutes(10),
-                                BigDecimal.valueOf(25.0),
-                                BigDecimal.valueOf(5.0));
+                        Product associatedProduct = createdProducts.get(i % createdProducts.size());
 
-                product2 = productRepository.findById(createAuction2.productId()).orElse(null);
+                        BigDecimal initialPrice = BigDecimal
+                                        .valueOf(ThreadLocalRandom.current().nextDouble(50.0, 5000.0))
+                                        .setScale(2, RoundingMode.HALF_UP);
+                        BigDecimal minBidIncrement = BigDecimal
+                                        .valueOf(ThreadLocalRandom.current().nextDouble(5.0, 200.0))
+                                        .setScale(2, RoundingMode.HALF_UP);
 
-                Auction auction2 = auctionMapper.auctionCreateRequestDTOToAuction(createAuction2);
-                auction2.setSeller(userSeller);
-                auction2.setProduct(product2);
-                auction2.setStatus(AuctionStatus.PENDING);
-                auction2.setInitialPrice(createAuction2.initialPrice());
-                auction2.setMinimunBidIncrement(createAuction2.minimunBidIncrement());
-                auction2.setCurrentBid(BigDecimal.ZERO);
-                auction2.setCurrentBidder(null);
+                        AuctionCreateRequestDTO auctionDto = new AuctionCreateRequestDTO(
+                                        associatedProduct.getId(),
+                                        fixedStartTime,
+                                        fixedEndTime,
+                                        initialPrice,
+                                        minBidIncrement);
 
-                auctionRepository.saveAll(List.of(auction, auction2));
+                        Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(auctionDto);
+                        auction.setSeller(userSeller);
+                        auction.setProduct(associatedProduct);
+                        auction.setStatus(fixedStatus);
+                        auction.setCurrentBid(fixedCurrentBid);
+                        auction.setCurrentBidder(fixedCurrentBidder);
 
+                        createdAuctions.add(auction);
+                }
+                createdAuctions = auctionRepository.saveAll(createdAuctions);
         }
 
 }
