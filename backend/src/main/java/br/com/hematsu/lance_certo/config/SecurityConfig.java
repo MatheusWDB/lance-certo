@@ -52,7 +52,8 @@ public class SecurityConfig {
 
         private static final String[] PUBLIC_POST_MATCHERS = {
                         "/api/users/login",
-                        "/api/users/register"
+                        "/api/users/register",
+                        "/api/bids/auctions/{auctionId}/bidder"
         };
 
         private static final String[] PUBLIC_GET_MATCHERS = {
@@ -60,7 +61,8 @@ public class SecurityConfig {
                         "/api/products/seller",
                         "/api/auctions/{id}",
                         "/api/auctions",
-                        "/bids/auctions/{auctionId}"
+                        "/api/bids/auctions/{auctionId}",
+                        "/api/bids"
         };
 
         private static final String[] SELLER_POST_MATCHERS = {

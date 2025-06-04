@@ -1,11 +1,9 @@
 package br.com.hematsu.lance_certo.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,35 +13,45 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.hematsu.lance_certo.dto.bid.BidResponseDTO;
 import br.com.hematsu.lance_certo.dto.bid.PlaceBidRequestDTO;
-import br.com.hematsu.lance_certo.model.User;
+import br.com.hematsu.lance_certo.service.AuthenticationService;
 import br.com.hematsu.lance_certo.service.BidService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/bids")
+@RequestMapping("/api")
 public class BidController {
 
     private final BidService bidService;
+    private final AuthenticationService authenticationService;
 
-    public BidController(BidService bidService) {
+    public BidController(BidService bidService, AuthenticationService authenticationService) {
         this.bidService = bidService;
+        this.authenticationService = authenticationService;
     }
 
-    @PostMapping("/auctions/{auctionId}/bidders")
+    @PostMapping("/bids/auctions/{auctionId}/bidder")
     public ResponseEntity<Void> placeBid(@PathVariable Long auctionId, @RequestBody @Valid PlaceBidRequestDTO bidDTO) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User authenticatedUser = (User) authentication.getPrincipal();
-        Long bidderId = authenticatedUser.getId();
+        Long bidderId = authenticationService.getIdByAuthentication();
 
         bidService.placeBid(auctionId, bidDTO.amount(), bidderId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/auctions/{auctionId}")
-    public ResponseEntity<List<BidResponseDTO>> getBidHistoryForAuction(@PathVariable Long auctionId) {
+    @GetMapping("/bids/auctions/{auctionId}")
+    public ResponseEntity<Page<BidResponseDTO>> getBidHistoryForAuction(@PathVariable Long auctionId,
+            Pageable pageable) {
 
-        List<BidResponseDTO> bids = bidService.getBidHistoryForAuction(auctionId);
+        Page<BidResponseDTO> bids = bidService.findBids("auction", auctionId, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(bids);
+    }
+
+    @GetMapping("/bids")
+    public ResponseEntity<Page<BidResponseDTO>> findMyBids(Pageable pageable) {
+
+        Long bidderId = authenticationService.getIdByAuthentication();
+
+        Page<BidResponseDTO> bids = bidService.findBids("bid", bidderId, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(bids);
     }
 }

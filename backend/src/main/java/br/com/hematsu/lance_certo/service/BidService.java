@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,7 @@ import br.com.hematsu.lance_certo.model.AuctionStatus;
 import br.com.hematsu.lance_certo.model.Bid;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.repository.BidRepository;
+import br.com.hematsu.lance_certo.repository.specs.BidSpecifications;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -79,9 +83,18 @@ public class BidService {
         return bidResponse;
     }
 
-    public List<BidResponseDTO> getBidHistoryForAuction(Long auctionId) {
-        List<Bid> bids = bidRepository.findByAuctionId(auctionId);
+    public Page<BidResponseDTO> findBids(String entity, Long id, Pageable pageable) {
 
-        return bids.stream().map(bid -> bidMapper.bidToBidResponseDTO(bid)).toList();
+        Specification<Bid> spec = BidSpecifications.withFilters(entity, id);
+        Page<Bid> bids = bidRepository.findAll(spec, pageable);
+
+        return bids.map(bidMapper::bidToBidResponseDTO);
+    }
+
+    public List<BidResponseDTO> findBidsByBidder(Long BidderId) {
+
+        List<Bid> bids = bidRepository.findByBidderId(BidderId);
+
+        return bids.stream().map(bidMapper::bidToBidResponseDTO).toList();
     }
 }
