@@ -2,25 +2,30 @@ package br.com.hematsu.lance_certo.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import br.com.hematsu.lance_certo.dto.auction.AuctionCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.auction.AuctionDetailsResponseDTO;
-import br.com.hematsu.lance_certo.dto.product.ProductResponseDTO;
 import br.com.hematsu.lance_certo.exception.ResourceNotFoundException;
 import br.com.hematsu.lance_certo.exception.auction.AuctionCannotBeCancelledException;
 import br.com.hematsu.lance_certo.exception.auction.NotAuctionOwnerException;
 import br.com.hematsu.lance_certo.exception.auction.ProductAlreadyInAuctionException;
 import br.com.hematsu.lance_certo.mapper.AuctionMapper;
-import br.com.hematsu.lance_certo.mapper.ProductMapper;
 import br.com.hematsu.lance_certo.model.Auction;
 import br.com.hematsu.lance_certo.model.AuctionStatus;
+import br.com.hematsu.lance_certo.model.Product;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.repository.AuctionRepository;
+import br.com.hematsu.lance_certo.repository.specs.AuctionSpecifications;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -28,7 +33,6 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final AuctionMapper auctionMapper;
-    private final ProductMapper productMapper;
     private final ProductService productService;
     private final UserService userService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -36,14 +40,12 @@ public class AuctionService {
     public AuctionService(
             AuctionRepository auctionRepository,
             AuctionMapper auctionMapper,
-            ProductMapper productMapper,
             ProductService productService,
             UserService userService,
             SimpMessagingTemplate messagingTemplate) {
 
         this.auctionRepository = auctionRepository;
         this.auctionMapper = auctionMapper;
-        this.productMapper = productMapper;
         this.productService = productService;
         this.userService = userService;
         this.messagingTemplate = messagingTemplate;
@@ -68,11 +70,11 @@ public class AuctionService {
 
         }
 
-        ProductResponseDTO product = productService.findById(auctionDTO.productId());
+        Product product = productService.findById(auctionDTO.productId());
 
         Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(auctionDTO);
         auction.setSeller(seller);
-        auction.setProduct(productMapper.productResponseDTOToProduct(product));
+        auction.setProduct(product);
         auction.setStatus(AuctionStatus.PENDING);
         auction.setInitialPrice(auctionDTO.initialPrice());
         auction.setMinimunBidIncrement(auctionDTO.minimunBidIncrement());
@@ -87,9 +89,75 @@ public class AuctionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Leilão, com o id: " + id));
     }
 
+    public List<AuctionDetailsResponseDTO> findAuctionsBySellerId(Long sellerId) {
+
+        List<Auction> auctions = auctionRepository.findBySellerId(sellerId);
+        return auctions.stream().map(auctionMapper::auctionToAuctionDetailsResponseDTO).toList();
+    }
+
+    public List<AuctionDetailsResponseDTO> findAuctionsByStatus(AuctionStatus status) {
+
+        List<Auction> auctions = auctionRepository.findByStatus(status);
+        return auctions.stream().map(auctionMapper::auctionToAuctionDetailsResponseDTO).toList();
+    }
+
     @Transactional
     public void save(Auction auction) {
         auctionRepository.save(auction);
+    }
+
+    public Page<AuctionDetailsResponseDTO> searchAndFilterAuctions(
+            String productName,
+            String productCategory,
+            String sellerName,
+            String winnerName,
+            String status,
+            BigDecimal minInitialPrice,
+            BigDecimal maxInitialPrice,
+            BigDecimal minCurrentBid,
+            BigDecimal maxCurrentBid,
+            LocalDateTime minStartTime,
+            LocalDateTime maxStartTime,
+            LocalDateTime minEndTime,
+            LocalDateTime maxEndTime,
+            Pageable pageable) {
+
+        List<String> productCategories = null;
+        if (productCategory != null && !productCategory.trim().isEmpty()) {
+            productCategories = Arrays.stream(productCategory.split(","))
+                    .map(String::trim).toList();
+        }
+
+        List<AuctionStatus> statuses = null;
+        if (status != null && !status.trim().isEmpty()) {
+            statuses = Arrays.stream(status.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(s -> AuctionStatus.valueOf(s.toUpperCase()))
+                    .filter(s -> s != null)
+                    .collect(Collectors.toList());
+        }
+
+        Specification<Auction> spec = AuctionSpecifications.withFilters(
+                productName,
+                productCategories,
+                sellerName,
+                winnerName,
+                statuses,
+                minInitialPrice,
+                maxInitialPrice,
+                minCurrentBid,
+                maxCurrentBid,
+                minStartTime,
+                maxStartTime,
+                minEndTime,
+                maxEndTime);
+
+        Page<Auction> auctionPage = auctionRepository.findAll(spec, pageable);
+
+        Page<AuctionDetailsResponseDTO> dtoPage = auctionPage.map(auctionMapper::auctionToAuctionDetailsResponseDTO);
+
+        return dtoPage;
     }
 
     @Transactional
