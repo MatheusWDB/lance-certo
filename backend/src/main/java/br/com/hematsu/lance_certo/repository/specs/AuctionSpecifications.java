@@ -34,13 +34,13 @@ public class AuctionSpecifications {
         };
     }
 
-   public static Specification<Auction> productCategoryIn(List<String> categories) { 
+    public static Specification<Auction> productCategoryIn(List<String> categories) {
         return (root, query, criteriaBuilder) -> {
             if (categories == null || categories.isEmpty()) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
             }
-            
-            return root.get("product").get("category").in(categories); 
+
+            return root.get("product").get("category").in(categories);
         };
     }
 
@@ -70,66 +70,78 @@ public class AuctionSpecifications {
 
     public static Specification<Auction> initialPriceBetween(BigDecimal minPrice,
             BigDecimal maxPrice) {
+
+        String attributeName = "initialPrice";
+
         return (root, query, criteriaBuilder) -> {
             if (minPrice == null && maxPrice == null) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
             }
             if (minPrice != null && maxPrice != null) {
-                return criteriaBuilder.between(root.get("initialPrice"), minPrice, maxPrice);
+                return criteriaBuilder.between(root.get(attributeName), minPrice, maxPrice);
 
             }
             if (minPrice != null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("initialPrice"), minPrice);
+                return criteriaBuilder.greaterThanOrEqualTo(root.get(attributeName), minPrice);
             }
 
-            return criteriaBuilder.lessThanOrEqualTo(root.get("initialPrice"), maxPrice);
+            return criteriaBuilder.lessThanOrEqualTo(root.get(attributeName), maxPrice);
         };
     }
 
     public static Specification<Auction> currentBidBetween(BigDecimal minBid, BigDecimal maxBid) {
+
+        String attributeName = "currentBid";
+
         return (root, query, criteriaBuilder) -> {
             if (minBid == null && maxBid == null) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
             }
             if (minBid != null && maxBid != null) {
-                return criteriaBuilder.between(root.get("currentBid"), minBid, maxBid);
+                return criteriaBuilder.between(root.get(attributeName), minBid, maxBid);
             }
             if (minBid != null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("currentBid"), minBid);
+                return criteriaBuilder.greaterThanOrEqualTo(root.get(attributeName), minBid);
             }
-            return criteriaBuilder.lessThanOrEqualTo(root.get("currentBid"), maxBid);
+            return criteriaBuilder.lessThanOrEqualTo(root.get(attributeName), maxBid);
         };
     }
 
     public static Specification<Auction> startTimeBetween(LocalDateTime minTime,
             LocalDateTime maxTime) {
+
+        String attributeName = "startTime";
+
         return (root, query, criteriaBuilder) -> {
             if (minTime == null && maxTime == null) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
             }
             if (minTime != null && maxTime != null) {
-                return criteriaBuilder.between(root.get("startTime"), minTime, maxTime);
+                return criteriaBuilder.between(root.get(attributeName), minTime, maxTime);
             }
             if (minTime != null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("startTime"), minTime);
+                return criteriaBuilder.greaterThanOrEqualTo(root.get(attributeName), minTime);
             }
-            return criteriaBuilder.lessThanOrEqualTo(root.get("startTime"), maxTime);
+            return criteriaBuilder.lessThanOrEqualTo(root.get(attributeName), maxTime);
         };
     }
 
     public static Specification<Auction> endTimeBetween(LocalDateTime minTime,
             LocalDateTime maxTime) {
+
+        String attributeName = "endTime";
+
         return (root, query, criteriaBuilder) -> {
             if (minTime == null && maxTime == null) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
             }
             if (minTime != null && maxTime != null) {
-                return criteriaBuilder.between(root.get("endTime"), minTime, maxTime);
+                return criteriaBuilder.between(root.get(attributeName), minTime, maxTime);
             }
             if (minTime != null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get("endTime"), minTime);
+                return criteriaBuilder.greaterThanOrEqualTo(root.get(attributeName), minTime);
             }
-            return criteriaBuilder.lessThanOrEqualTo(root.get("endTime"), maxTime);
+            return criteriaBuilder.lessThanOrEqualTo(root.get(attributeName), maxTime);
         };
     }
 
@@ -150,7 +162,6 @@ public class AuctionSpecifications {
             specs.add(productNameLike(productName));
         }
         if (productCategories != null && !productCategories.isEmpty()) {
-
             specs.add(productCategoryIn(productCategories));
         }
         if (sellerName != null && !sellerName.trim().isEmpty()) {

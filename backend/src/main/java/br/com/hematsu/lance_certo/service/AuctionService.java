@@ -155,9 +155,7 @@ public class AuctionService {
 
         Page<Auction> auctionPage = auctionRepository.findAll(spec, pageable);
 
-        Page<AuctionDetailsResponseDTO> dtoPage = auctionPage.map(auctionMapper::auctionToAuctionDetailsResponseDTO);
-
-        return dtoPage;
+        return auctionPage.map(auctionMapper::auctionToAuctionDetailsResponseDTO);
     }
 
     @Transactional

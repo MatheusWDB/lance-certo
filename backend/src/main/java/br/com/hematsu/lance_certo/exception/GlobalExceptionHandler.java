@@ -138,11 +138,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<StandardError> handleAllOtherExceptions(Exception e, HttpServletRequest request) {
+        
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         String error = status.getReasonPhrase();
-
-        System.err.println("Unhandled exception occurred: " + e.getMessage());
-        e.printStackTrace();
 
         StandardError err = new StandardError(status, error, "Ocorreu um erro inesperado.", request.getRequestURI());
         return ResponseEntity.status(status).body(err);
