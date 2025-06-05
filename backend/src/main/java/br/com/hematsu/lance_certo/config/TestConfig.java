@@ -61,9 +61,11 @@ public class TestConfig implements CommandLineRunner {
         public void run(String... args) throws Exception {
 
                 // Criar usuários
+                String password = "12345678";
+
                 UserRegistrationRequestDTO createUserAdmin = new UserRegistrationRequestDTO(
                                 "Admin123",
-                                passwordEncoder.encode("12345678"),
+                                passwordEncoder.encode(password),
                                 "admin@gmail.com",
                                 "Administrador",
                                 UserRole.ADMIN,
@@ -71,7 +73,7 @@ public class TestConfig implements CommandLineRunner {
 
                 UserRegistrationRequestDTO createUserSeller = new UserRegistrationRequestDTO(
                                 "Seller123",
-                                passwordEncoder.encode("12345678"),
+                                passwordEncoder.encode(password),
                                 "seller@gmail.com",
                                 "Vendedor",
                                 UserRole.SELLER,
@@ -79,7 +81,7 @@ public class TestConfig implements CommandLineRunner {
 
                 UserRegistrationRequestDTO createUserBuyer = new UserRegistrationRequestDTO(
                                 "Buyer123",
-                                passwordEncoder.encode("12345678"),
+                                passwordEncoder.encode(password),
                                 "buyer@gmail.com",
                                 "Comprador",
                                 UserRole.BUYER,
@@ -168,7 +170,8 @@ public class TestConfig implements CommandLineRunner {
 
                         createdAuctions.add(auction);
                 }
-                createdAuctions = auctionRepository.saveAll(createdAuctions);
+                
+                auctionRepository.saveAll(createdAuctions);
         }
 
 }
