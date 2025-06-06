@@ -41,6 +41,10 @@ public class SecurityConfig {
         @Value("${cors.allowed-methods}")
         private String allowedMethods;
 
+        private static final String ADMIN = "ADMIN";
+
+        private static final String SELLER = "SELLER";
+
         private static final String[] PUBLIC_MATCHERS = {
                         "/h2-console/**",
                         "/swagger-ui.html",
@@ -126,16 +130,20 @@ public class SecurityConfig {
                                                                 .permitAll()
                                                                 .requestMatchers(HttpMethod.GET, PUBLIC_GET_MATCHERS)
                                                                 .permitAll()
-                                                                .requestMatchers(HttpMethod.PATCH, PUBLIC_PATCH_MATCHERS)
+                                                                .requestMatchers(
+                                                                                HttpMethod.PATCH,
+                                                                                PUBLIC_PATCH_MATCHERS)
                                                                 .permitAll()
                                                                 .requestMatchers(HttpMethod.GET, ADMIN_GET_MATCHERS)
-                                                                .hasRole("ADMIN")
+                                                                .hasRole(ADMIN)
                                                                 .requestMatchers(HttpMethod.POST, SELLER_POST_MATCHERS)
-                                                                .hasRole("SELLER")
+                                                                .hasRole(SELLER)
                                                                 .requestMatchers(HttpMethod.GET, SELLER_GET_MATCHERS)
-                                                                .hasRole("SELLER")
-                                                                .requestMatchers(HttpMethod.PATCH, SELLER_PATCH_MATCHERS)
-                                                                .hasRole("SELLER")
+                                                                .hasRole(SELLER)
+                                                                .requestMatchers(
+                                                                                HttpMethod.PATCH,
+                                                                                SELLER_PATCH_MATCHERS)
+                                                                .hasRole(SELLER)
                                                                 .anyRequest().authenticated())
                                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                                 .exceptionHandling(exception -> exception
