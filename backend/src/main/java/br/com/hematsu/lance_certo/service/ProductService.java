@@ -36,11 +36,11 @@ public class ProductService {
 
         User seller = userService.findById(sellerId);
 
-        Product product = productMapper.productRequestDTOToEntity(productDTO);
+        Product product = productMapper.toProduct(productDTO);
 
         product.setSeller(seller);
 
-        save(product);
+        productRepository.save(product);
     }
 
     public Product findById(Long id) {
@@ -51,7 +51,7 @@ public class ProductService {
     public List<ProductResponseDTO> findProductsBySeller(Long sellerId) {
 
         List<Product> products = productRepository.findBySellerId(sellerId);
-        return products.stream().map(productMapper::productToProductResponseDTO).toList();
+        return products.stream().map(productMapper::toProductResponseDTO).toList();
     }
 
     public Page<ProductResponseDTO> findByNameOrCategory(String name, String category, Pageable pageable) {
@@ -65,7 +65,7 @@ public class ProductService {
         Specification<Product> spec = ProductSpecifications.withFilters(name, categories);
 
         Page<Product> products = productRepository.findAll(spec, pageable);
-        return products.map(productMapper::productToProductResponseDTO);
+        return products.map(productMapper::toProductResponseDTO);
     }
 
     @Transactional

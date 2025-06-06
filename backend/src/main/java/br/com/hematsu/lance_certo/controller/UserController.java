@@ -58,18 +58,18 @@ public class UserController {
         User user = (User) auth.getPrincipal();
         String token = tokenService.generateToken((User) auth.getPrincipal());
 
-        UserTokenResponseDTO userDTO = new UserTokenResponseDTO(token, userMapper.userToUserResponseDTO(user));
+        UserTokenResponseDTO userDTO = new UserTokenResponseDTO(token, userMapper.toUserResponseDTO(user));
 
         return ResponseEntity.status(HttpStatus.OK).body(userDTO);
 
     }
 
-    @GetMapping("/user")
+    @GetMapping("/users")
     public ResponseEntity<UserResponseDTO> getByUsernameOrEmail(
             @RequestParam(required = true) String login) {
 
         User user = (User) authenticationService.loadUserByUsername(login);
-        return ResponseEntity.status(HttpStatus.OK).body(userMapper.userToUserResponseDTO(user));
+        return ResponseEntity.status(HttpStatus.OK).body(userMapper.toUserResponseDTO(user));
     }
 
     @PatchMapping("/users/update")
@@ -78,20 +78,19 @@ public class UserController {
         Long id = authenticationService.getIdByAuthentication();
         User user = userService.findById(id);
 
-        userService.authenticate(
-                requestDTO.username().equals(user.getUsername()) ? requestDTO.username() : requestDTO.email(),
-                requestDTO.currentPassword());
+        userService.authenticate(user.getUsername(), requestDTO.currentPassword());
 
         user.setUsername(requestDTO.username());
         user.setName(requestDTO.name());
         user.setEmail(requestDTO.email());
         user.setPhone(requestDTO.phone());
 
-        String encodedPassword = userService.encodePassword(
-                requestDTO.newPassword() == null ? requestDTO.currentPassword() : requestDTO.newPassword());
-        user.setPassword(encodedPassword);
+        if (requestDTO.newPassword() != null && !requestDTO.newPassword().isBlank()) {
+            String encodedPassword = userService.encodePassword(requestDTO.newPassword());
+            user.setPassword(encodedPassword);
+        }
 
         userService.save(user);
-        return ResponseEntity.status(HttpStatus.OK).body(userMapper.userToUserResponseDTO(user));
+        return ResponseEntity.status(HttpStatus.OK).body(userMapper.toUserResponseDTO(user));
     }
 }

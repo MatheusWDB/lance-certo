@@ -13,13 +13,10 @@ import br.com.hematsu.lance_certo.exception.user.UserAlreadyExistsException;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.repository.UserRepository;
-import jakarta.annotation.Resource;
+
 
 @Service
 public class UserService {
-
-    @Resource
-    private UserService userService;
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -46,12 +43,12 @@ public class UserService {
             throw new UserAlreadyExistsException();
         }
 
-        User newUser = userMapper.userRegistrationRequestDTOToUser(registrationDTO);
+        User newUser = userMapper.toUser(registrationDTO);
 
         String encodedPassword = encodePassword(registrationDTO.password());
         newUser.setPassword(encodedPassword);
 
-        userService.save(newUser);
+        userRepository.save(newUser);
     }
 
     public User findById(Long id) {

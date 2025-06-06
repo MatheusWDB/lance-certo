@@ -15,8 +15,8 @@ public interface AuctionMapper {
     @Mapping(target = "product", source = "product")
     @Mapping(target = "currentBidder", source = "currentBidder")
     @Mapping(target = "winner", source = "winner")
-    AuctionDetailsResponseDTO auctionToAuctionDetailsResponseDTO(Auction auction);
+    AuctionDetailsResponseDTO toAuctionDetailsResponseDTO(Auction auction);
 
-    Auction auctionCreateRequestDTOToAuction(AuctionCreateRequestDTO dto);
+    Auction toAuction(AuctionCreateRequestDTO dto);
 
 }

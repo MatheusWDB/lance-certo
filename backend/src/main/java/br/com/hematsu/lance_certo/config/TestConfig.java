@@ -92,9 +92,9 @@ public class TestConfig implements CommandLineRunner {
                                 "79 999999992");
 
                 userRepository.saveAll(List.of(
-                                userMapper.userRegistrationRequestDTOToUser(createUserAdmin),
-                                userMapper.userRegistrationRequestDTOToUser(createUserSeller),
-                                userMapper.userRegistrationRequestDTOToUser(createUserBuyer)));
+                                userMapper.toUser(createUserAdmin),
+                                userMapper.toUser(createUserSeller),
+                                userMapper.toUser(createUserBuyer)));
 
                 User userSeller = userRepository.findByLogin("seller@gmail.com").orElse(null);
 
@@ -132,7 +132,7 @@ public class TestConfig implements CommandLineRunner {
                                         descriptions[i],
                                         null,
                                         categories[i]);
-                        Product product = productMapper.productRequestDTOToEntity(productDto);
+                        Product product = productMapper.toProduct(productDto);
                         product.setSeller(userSeller);
                         createdProducts.add(product);
                 }
@@ -165,7 +165,7 @@ public class TestConfig implements CommandLineRunner {
                                         initialPrice,
                                         minBidIncrement);
 
-                        Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(auctionDto);
+                        Auction auction = auctionMapper.toAuction(auctionDto);
                         auction.setSeller(userSeller);
                         auction.setProduct(associatedProduct);
                         auction.setStatus(fixedStatus);

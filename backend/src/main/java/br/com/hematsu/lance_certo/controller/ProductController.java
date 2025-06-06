@@ -64,7 +64,14 @@ public class ProductController {
 
     @GetMapping("/products/seller")
     public ResponseEntity<List<ProductResponseDTO>> getProductsBySeller(
-            @RequestParam(name = "seller", required = true) String param) {
+            @RequestParam(required = false) String param) {
+
+        if (param == null || param.isBlank()) {
+            Long sellerId = authenticationService.getIdByAuthentication();
+
+            List<ProductResponseDTO> products = productService.findProductsBySeller(sellerId);
+            return ResponseEntity.status(HttpStatus.OK).body(products);
+        }
 
         User seller = (User) authenticationService.loadUserByUsername(param);
         Long sellerId = seller.getId();
@@ -85,6 +92,6 @@ public class ProductController {
         product.setDescription(body.description());
 
         product = productService.save(product);
-        return ResponseEntity.status(HttpStatus.OK).body(productMapper.productToProductResponseDTO(product));
+        return ResponseEntity.status(HttpStatus.OK).body(productMapper.toProductResponseDTO(product));
     }
 }

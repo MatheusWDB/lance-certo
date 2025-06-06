@@ -14,8 +14,6 @@ import br.com.hematsu.lance_certo.model.Bid;
 
 public interface BidRepository extends JpaRepository<Bid, Long>, JpaSpecificationExecutor<Bid> {
 
-    List<Bid> findByAuctionId(Long auctionId);
-
     List<Bid> findByBidderId(Long bidderId);
 
     @NonNull

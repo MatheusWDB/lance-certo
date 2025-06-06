@@ -36,7 +36,7 @@ public class ProductSpecifications {
         if (name != null) {
             specs.add(nameLike(name));
         }
-        if (categories.isEmpty()) {
+        if (categories != null && !categories.isEmpty()) {
             specs.add(categoryIn(categories));
         }
 

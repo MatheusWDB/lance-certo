@@ -59,15 +59,23 @@ public class SecurityConfig {
         private static final String[] PUBLIC_GET_MATCHERS = {
                         "/api/products",
                         "/api/products/seller",
-                        "/api/auctions/{id}",
+                        "/api/auction/{id}",
                         "/api/auctions",
                         "/api/bids/auctions/{auctionId}",
                         "/api/bids"
         };
 
+        private static final String[] PUBLIC_PATCH_MATCHERS = {
+                        "/api/users/update"
+        };
+
         private static final String[] SELLER_POST_MATCHERS = {
                         "/api/products/create/sellers",
                         "/api/auctions/create/sellers"
+        };
+
+        private static final String[] SELLER_GET_MATCHERS = {
+                        "/api/auctions/seller"
         };
 
         private static final String[] SELLER_PATCH_MATCHERS = {
@@ -76,7 +84,7 @@ public class SecurityConfig {
         };
 
         private static final String[] ADMIN_GET_MATCHERS = {
-                        "/api/user"
+                        "/api/users"
         };
 
         private final SecurityFilter securityFilter;
@@ -118,11 +126,15 @@ public class SecurityConfig {
                                                                 .permitAll()
                                                                 .requestMatchers(HttpMethod.GET, PUBLIC_GET_MATCHERS)
                                                                 .permitAll()
+                                                                .requestMatchers(HttpMethod.PATCH, PUBLIC_PATCH_MATCHERS)
+                                                                .permitAll()
                                                                 .requestMatchers(HttpMethod.GET, ADMIN_GET_MATCHERS)
                                                                 .hasRole("ADMIN")
                                                                 .requestMatchers(HttpMethod.POST, SELLER_POST_MATCHERS)
                                                                 .hasRole("SELLER")
-                                                                .requestMatchers(HttpMethod.PUT, SELLER_PATCH_MATCHERS)
+                                                                .requestMatchers(HttpMethod.GET, SELLER_GET_MATCHERS)
+                                                                .hasRole("SELLER")
+                                                                .requestMatchers(HttpMethod.PATCH, SELLER_PATCH_MATCHERS)
                                                                 .hasRole("SELLER")
                                                                 .anyRequest().authenticated())
                                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

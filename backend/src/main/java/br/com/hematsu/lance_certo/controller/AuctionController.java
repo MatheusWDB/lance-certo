@@ -1,7 +1,5 @@
 package br.com.hematsu.lance_certo.controller;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -14,11 +12,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.hematsu.lance_certo.dto.auction.AuctionCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.auction.AuctionDetailsResponseDTO;
+import br.com.hematsu.lance_certo.dto.auction.AuctionFilterParamsDTO;
 import br.com.hematsu.lance_certo.mapper.AuctionMapper;
 import br.com.hematsu.lance_certo.model.Auction;
 import br.com.hematsu.lance_certo.service.AuctionService;
@@ -53,7 +51,7 @@ public class AuctionController {
     public ResponseEntity<AuctionDetailsResponseDTO> getAuctionById(@PathVariable Long id) {
 
         Auction auction = auctionService.findById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(auctionMapper.auctionToAuctionDetailsResponseDTO(auction));
+        return ResponseEntity.status(HttpStatus.OK).body(auctionMapper.toAuctionDetailsResponseDTO(auction));
     }
 
     @GetMapping("/auctions/seller")
@@ -67,35 +65,11 @@ public class AuctionController {
 
     @GetMapping("/auctions")
     public ResponseEntity<Page<AuctionDetailsResponseDTO>> searchAndFilterAuctions(
-            @RequestParam(required = false) String productName,
-            @RequestParam(required = false) String productCategory,
-            @RequestParam(required = false) String sellerName,
-            @RequestParam(required = false) String winnerName,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) BigDecimal minInitialPrice,
-            @RequestParam(required = false) BigDecimal maxInitialPrice,
-            @RequestParam(required = false) BigDecimal minCurrentBid,
-            @RequestParam(required = false) BigDecimal maxCurrentBid,
-            @RequestParam(required = false) LocalDateTime minStartTime,
-            @RequestParam(required = false) LocalDateTime maxStartTime,
-            @RequestParam(required = false) LocalDateTime minEndTime,
-            @RequestParam(required = false) LocalDateTime maxEndTime,
+            AuctionFilterParamsDTO auctionFilterParamsDTO,
             Pageable pageable) {
 
         Page<AuctionDetailsResponseDTO> auctionPage = auctionService.searchAndFilterAuctions(
-                productName,
-                productCategory,
-                sellerName,
-                winnerName,
-                status,
-                minInitialPrice,
-                maxInitialPrice,
-                minCurrentBid,
-                maxCurrentBid,
-                minStartTime,
-                maxStartTime,
-                minEndTime,
-                maxEndTime,
+                auctionFilterParamsDTO,
                 pageable);
 
         return ResponseEntity.status(HttpStatus.OK).body(auctionPage);

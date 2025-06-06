@@ -2,7 +2,6 @@ package br.com.hematsu.lance_certo.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.hematsu.lance_certo.dto.auction.AuctionCreateRequestDTO;
 import br.com.hematsu.lance_certo.dto.auction.AuctionDetailsResponseDTO;
+import br.com.hematsu.lance_certo.dto.auction.AuctionFilterParamsDTO;
 import br.com.hematsu.lance_certo.exception.ResourceNotFoundException;
 import br.com.hematsu.lance_certo.exception.auction.AuctionCannotBeCancelledException;
 import br.com.hematsu.lance_certo.exception.auction.NotAuctionOwnerException;
@@ -71,7 +71,7 @@ public class AuctionService {
 
         Product product = productService.findById(auctionDTO.productId());
 
-        Auction auction = auctionMapper.auctionCreateRequestDTOToAuction(auctionDTO);
+        Auction auction = auctionMapper.toAuction(auctionDTO);
         auction.setSeller(seller);
         auction.setProduct(product);
         auction.setStatus(AuctionStatus.PENDING);
@@ -91,13 +91,7 @@ public class AuctionService {
     public List<AuctionDetailsResponseDTO> findAuctionsBySellerId(Long sellerId) {
 
         List<Auction> auctions = auctionRepository.findBySellerId(sellerId);
-        return auctions.stream().map(auctionMapper::auctionToAuctionDetailsResponseDTO).toList();
-    }
-
-    public List<AuctionDetailsResponseDTO> findAuctionsByStatus(AuctionStatus status) {
-
-        List<Auction> auctions = auctionRepository.findByStatus(status);
-        return auctions.stream().map(auctionMapper::auctionToAuctionDetailsResponseDTO).toList();
+        return auctions.stream().map(auctionMapper::toAuctionDetailsResponseDTO).toList();
     }
 
     @Transactional
@@ -106,55 +100,14 @@ public class AuctionService {
     }
 
     public Page<AuctionDetailsResponseDTO> searchAndFilterAuctions(
-            String productName,
-            String productCategory,
-            String sellerName,
-            String winnerName,
-            String status,
-            BigDecimal minInitialPrice,
-            BigDecimal maxInitialPrice,
-            BigDecimal minCurrentBid,
-            BigDecimal maxCurrentBid,
-            LocalDateTime minStartTime,
-            LocalDateTime maxStartTime,
-            LocalDateTime minEndTime,
-            LocalDateTime maxEndTime,
+            AuctionFilterParamsDTO auctionFilterParamsDTO,
             Pageable pageable) {
 
-        List<String> productCategories = null;
-        if (productCategory != null && !productCategory.trim().isEmpty()) {
-            productCategories = Arrays.stream(productCategory.split(","))
-                    .map(String::trim).toList();
-        }
-
-        List<AuctionStatus> statuses = null;
-        if (status != null && !status.trim().isEmpty()) {
-            statuses = Arrays.stream(status.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .map(s -> AuctionStatus.valueOf(s.toUpperCase()))
-                    .filter(s -> s != null)
-                    .toList();
-        }
-
-        Specification<Auction> spec = AuctionSpecifications.withFilters(
-                productName,
-                productCategories,
-                sellerName,
-                winnerName,
-                statuses,
-                minInitialPrice,
-                maxInitialPrice,
-                minCurrentBid,
-                maxCurrentBid,
-                minStartTime,
-                maxStartTime,
-                minEndTime,
-                maxEndTime);
+        Specification<Auction> spec = AuctionSpecifications.withFilters(auctionFilterParamsDTO);
 
         Page<Auction> auctionPage = auctionRepository.findAll(spec, pageable);
 
-        return auctionPage.map(auctionMapper::auctionToAuctionDetailsResponseDTO);
+        return auctionPage.map(auctionMapper::toAuctionDetailsResponseDTO);
     }
 
     @Transactional
@@ -173,7 +126,7 @@ public class AuctionService {
         auctionRepository.saveAll(auctions);
 
         auctions.forEach(auction -> {
-            AuctionDetailsResponseDTO auctionDTO = auctionMapper.auctionToAuctionDetailsResponseDTO(auction);
+            AuctionDetailsResponseDTO auctionDTO = auctionMapper.toAuctionDetailsResponseDTO(auction);
             String destination = "/topic/auctions/" + auctionDTO.id() + "/status";
             messagingTemplate.convertAndSend(destination, auctionDTO);
         });
@@ -203,7 +156,7 @@ public class AuctionService {
         auctionRepository.saveAll(auctions);
 
         auctions.forEach(auction -> {
-            AuctionDetailsResponseDTO auctionDTO = auctionMapper.auctionToAuctionDetailsResponseDTO(auction);
+            AuctionDetailsResponseDTO auctionDTO = auctionMapper.toAuctionDetailsResponseDTO(auction);
             String destination = "/topic/auctions/" + auctionDTO.id() + "/status";
             messagingTemplate.convertAndSend(destination, auctionDTO);
         });
@@ -227,6 +180,6 @@ public class AuctionService {
         auction.setStatus(AuctionStatus.CANCELLED);
         auction = auctionRepository.save(auction);
 
-        return auctionMapper.auctionToAuctionDetailsResponseDTO(auction);
+        return auctionMapper.toAuctionDetailsResponseDTO(auction);
     }
 }

@@ -3,10 +3,12 @@ package br.com.hematsu.lance_certo.repository.specs;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import br.com.hematsu.lance_certo.dto.auction.AuctionFilterParamsDTO;
 import br.com.hematsu.lance_certo.model.Auction;
 import br.com.hematsu.lance_certo.model.AuctionStatus;
 
@@ -146,47 +148,36 @@ public class AuctionSpecifications {
         };
     }
 
-    public static Specification<Auction> withFilters(
-            String productName,
-            List<String> productCategories,
-            String sellerName,
-            String winnerName,
-            List<AuctionStatus> statuses,
-            BigDecimal minInitialPrice, BigDecimal maxInitialPrice,
-            BigDecimal minCurrentBid, BigDecimal maxCurrentBid,
-            LocalDateTime minStartTime, LocalDateTime maxStartTime,
-            LocalDateTime minEndTime, LocalDateTime maxEndTime) {
+    public static Specification<Auction> withFilters(AuctionFilterParamsDTO auctionFilterParamsDTO) {
+
+       List<String> productCategories = null;
+        if (auctionFilterParamsDTO.productCategory() != null && !auctionFilterParamsDTO.productCategory().trim().isEmpty()) {
+            productCategories = Arrays.stream(auctionFilterParamsDTO.productCategory().split(","))
+                    .map(String::trim).toList();
+        }
+
+        List<AuctionStatus> statuses = null;
+        if (auctionFilterParamsDTO.status() != null && !auctionFilterParamsDTO.status().trim().isEmpty()) {
+            statuses = Arrays.stream(auctionFilterParamsDTO.status().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(s -> AuctionStatus.valueOf(s.toUpperCase()))
+                    .filter(s -> s != null)
+                    .toList();
+        }
 
         List<Specification<Auction>> specs = new ArrayList<>();
 
-        if (productName != null && !productName.trim().isEmpty()) {
-            specs.add(productNameLike(productName));
-        }
-        if (productCategories != null && !productCategories.isEmpty()) {
-            specs.add(productCategoryIn(productCategories));
-        }
-        if (sellerName != null && !sellerName.trim().isEmpty()) {
-            specs.add(sellerNameLike(sellerName));
-        }
-        if (winnerName != null && !winnerName.trim().isEmpty()) {
-            specs.add(winnerNameLike(winnerName));
-        }
-        if (statuses != null && !statuses.isEmpty()) {
-            specs.add(hasStatusIn(statuses));
-        }
-        if (minInitialPrice != null || maxInitialPrice != null) {
-            specs.add(initialPriceBetween(minInitialPrice, maxInitialPrice));
-        }
-        if (minCurrentBid != null || maxCurrentBid != null) {
-            specs.add(currentBidBetween(minCurrentBid, maxCurrentBid));
-        }
-        if (minStartTime != null || maxStartTime != null) {
-            specs.add(startTimeBetween(minStartTime, maxStartTime));
-        }
-        if (minEndTime != null || maxEndTime != null) {
-            specs.add(endTimeBetween(minEndTime, maxEndTime));
-        }
-
+        specs.add(productNameLike(auctionFilterParamsDTO.productName()));
+        specs.add(productCategoryIn(productCategories));
+        specs.add(sellerNameLike(auctionFilterParamsDTO.sellerName()));
+        specs.add(winnerNameLike(auctionFilterParamsDTO.winnerName()));
+        specs.add(hasStatusIn(statuses));
+        specs.add(initialPriceBetween(auctionFilterParamsDTO.minInitialPrice(), auctionFilterParamsDTO.maxInitialPrice()));
+        specs.add(currentBidBetween(auctionFilterParamsDTO.minCurrentBid(), auctionFilterParamsDTO.maxCurrentBid()));
+        specs.add(startTimeBetween(auctionFilterParamsDTO.minStartTime(), auctionFilterParamsDTO.maxStartTime()));
+        specs.add(endTimeBetween(auctionFilterParamsDTO.minEndTime(), auctionFilterParamsDTO.maxEndTime()));
+        
         return Specification.allOf(specs);
     }
 }

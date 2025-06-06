@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.hematsu.lance_certo.dto.bid.BidFilterParamsDTO;
 import br.com.hematsu.lance_certo.dto.bid.BidResponseDTO;
 import br.com.hematsu.lance_certo.dto.bid.PlaceBidRequestDTO;
 import br.com.hematsu.lance_certo.service.AuthenticationService;
@@ -39,10 +40,12 @@ public class BidController {
     }
 
     @GetMapping("/bids/auctions/{auctionId}")
-    public ResponseEntity<Page<BidResponseDTO>> getBidHistoryForAuction(@PathVariable Long auctionId,
+    public ResponseEntity<Page<BidResponseDTO>> getBidHistoryForAuction(
+            @PathVariable Long auctionId,
+            BidFilterParamsDTO bidParam,
             Pageable pageable) {
 
-        Page<BidResponseDTO> bids = bidService.findBids("auction", auctionId, pageable);
+        Page<BidResponseDTO> bids = bidService.findBids(bidParam, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(bids);
     }
 
@@ -50,8 +53,9 @@ public class BidController {
     public ResponseEntity<Page<BidResponseDTO>> findMyBids(Pageable pageable) {
 
         Long bidderId = authenticationService.getIdByAuthentication();
+        BidFilterParamsDTO bidParam = new BidFilterParamsDTO(bidderId, null);
 
-        Page<BidResponseDTO> bids = bidService.findBids("bid", bidderId, pageable);
+        Page<BidResponseDTO> bids = bidService.findBids(bidParam, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(bids);
     }
 }

@@ -16,10 +16,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     List<Product> findBySellerId(Long sellerId);
 
-    List<Product> findByName(String name);
-
-    List<Product> findByCategory(String category);
-
     @NonNull
     Page<Product> findAll(@Nullable Specification<Product> spec, @NonNull Pageable pageable);
 }
