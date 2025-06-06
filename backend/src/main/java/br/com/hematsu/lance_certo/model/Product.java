@@ -1,7 +1,7 @@
 package br.com.hematsu.lance_certo.model;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
-
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -20,8 +20,9 @@ import lombok.Data;
 
 @Data
 @Entity(name = "tb_products")
-public class Product {
-    
+public class Product implements Serializable {
+    private static final long serialVersionUID = 2405172041950251807L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

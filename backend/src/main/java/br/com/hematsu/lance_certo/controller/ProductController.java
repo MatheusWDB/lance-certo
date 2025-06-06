@@ -2,6 +2,8 @@ package br.com.hematsu.lance_certo.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,15 +49,16 @@ public class ProductController {
     }
 
     @GetMapping("/products")
-    public ResponseEntity<List<ProductResponseDTO>> getProductsByNameOrCategory(
-            @RequestParam(name = "name", defaultValue = "") String paramName,
-            @RequestParam(name = "category", defaultValue = "") String paramCategory) {
+    public ResponseEntity<Page<ProductResponseDTO>> getProductsByNameOrCategory(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
+            Pageable pageable) {
 
-        if (paramName.isBlank() && paramCategory.isBlank()) {
+        if (name.isBlank() && category.isBlank()) {
             throw new IllegalArgumentException("Pelo menos um dos parâmetros precisa ter um valor.");
         }
 
-        List<ProductResponseDTO> products = productService.findByNameOrCategory(paramName, paramCategory);
+        Page<ProductResponseDTO> products = productService.findByNameOrCategory(name, category, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(products);
     }
 

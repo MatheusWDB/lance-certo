@@ -1,7 +1,11 @@
 package br.com.hematsu.lance_certo.service;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.hematsu.lance_certo.dto.product.ProductRequestDTO;
@@ -11,6 +15,7 @@ import br.com.hematsu.lance_certo.mapper.ProductMapper;
 import br.com.hematsu.lance_certo.model.Product;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.repository.ProductRepository;
+import br.com.hematsu.lance_certo.repository.specs.ProductSpecifications;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -40,19 +45,27 @@ public class ProductService {
 
     public Product findById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Produto, com o id: " + id));        
+                .orElseThrow(() -> new ResourceNotFoundException("Produto, com o id: " + id));
     }
 
     public List<ProductResponseDTO> findProductsBySeller(Long sellerId) {
 
         List<Product> products = productRepository.findBySellerId(sellerId);
-        return products.stream().map(product -> productMapper.productToProductResponseDTO(product)).toList();
+        return products.stream().map(productMapper::productToProductResponseDTO).toList();
     }
 
-    public List<ProductResponseDTO> findByNameOrCategory(String name, String category) {
+    public Page<ProductResponseDTO> findByNameOrCategory(String name, String category, Pageable pageable) {
 
-        List<Product> products = productRepository.findByNameAndCategory(name, category);
-        return products.stream().map(productMapper::productToProductResponseDTO).toList();
+        List<String> categories = null;
+        if (category != null && !category.trim().isEmpty()) {
+            categories = Arrays.stream(category.split(","))
+                    .map(String::trim).toList();
+        }
+
+        Specification<Product> spec = ProductSpecifications.withFilters(name, categories);
+
+        Page<Product> products = productRepository.findAll(spec, pageable);
+        return products.map(productMapper::productToProductResponseDTO);
     }
 
     @Transactional
