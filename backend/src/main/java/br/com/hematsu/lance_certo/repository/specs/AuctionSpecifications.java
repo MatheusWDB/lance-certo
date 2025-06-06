@@ -12,8 +12,10 @@ import br.com.hematsu.lance_certo.model.AuctionStatus;
 
 public class AuctionSpecifications {
 
-    public static Specification<Auction> hasStatusIn(List<AuctionStatus> statuses) {
+    private AuctionSpecifications() {
+    }
 
+    public static Specification<Auction> hasStatusIn(List<AuctionStatus> statuses) {
         return (root, query, criteriaBuilder) -> {
             if (statuses == null || statuses.isEmpty()) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
@@ -24,7 +26,6 @@ public class AuctionSpecifications {
     }
 
     public static Specification<Auction> productNameLike(String productName) {
-
         return (root, query, criteriaBuilder) -> {
             if (productName == null || productName.trim().isEmpty()) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
@@ -45,7 +46,6 @@ public class AuctionSpecifications {
     }
 
     public static Specification<Auction> sellerNameLike(String sellerName) {
-
         return (root, query, criteriaBuilder) -> {
             if (sellerName == null || sellerName.trim().isEmpty()) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
@@ -56,7 +56,6 @@ public class AuctionSpecifications {
     }
 
     public static Specification<Auction> winnerNameLike(String winnerName) {
-
         return (root, query, criteriaBuilder) -> {
             if (winnerName == null || winnerName.trim().isEmpty()) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
@@ -68,7 +67,8 @@ public class AuctionSpecifications {
         };
     }
 
-    public static Specification<Auction> initialPriceBetween(BigDecimal minPrice,
+    public static Specification<Auction> initialPriceBetween(
+            BigDecimal minPrice,
             BigDecimal maxPrice) {
 
         String attributeName = "initialPrice";
@@ -90,7 +90,6 @@ public class AuctionSpecifications {
     }
 
     public static Specification<Auction> currentBidBetween(BigDecimal minBid, BigDecimal maxBid) {
-
         String attributeName = "currentBid";
 
         return (root, query, criteriaBuilder) -> {
@@ -107,7 +106,8 @@ public class AuctionSpecifications {
         };
     }
 
-    public static Specification<Auction> startTimeBetween(LocalDateTime minTime,
+    public static Specification<Auction> startTimeBetween(
+            LocalDateTime minTime,
             LocalDateTime maxTime) {
 
         String attributeName = "startTime";
@@ -126,7 +126,8 @@ public class AuctionSpecifications {
         };
     }
 
-    public static Specification<Auction> endTimeBetween(LocalDateTime minTime,
+    public static Specification<Auction> endTimeBetween(
+            LocalDateTime minTime,
             LocalDateTime maxTime) {
 
         String attributeName = "endTime";

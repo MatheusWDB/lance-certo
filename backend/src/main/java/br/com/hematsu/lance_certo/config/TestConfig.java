@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -30,6 +31,9 @@ import br.com.hematsu.lance_certo.repository.UserRepository;
 @Configuration
 @Profile("test")
 public class TestConfig implements CommandLineRunner {
+
+        @Value("${password.test}")
+        private String passwordTest;
 
         private final UserRepository userRepository;
         private final ProductRepository productRepository;
@@ -61,7 +65,7 @@ public class TestConfig implements CommandLineRunner {
         public void run(String... args) throws Exception {
 
                 // Criar usuários
-                String password = "12345678";
+                String password = this.passwordTest;
 
                 UserRegistrationRequestDTO createUserAdmin = new UserRegistrationRequestDTO(
                                 "Admin123",

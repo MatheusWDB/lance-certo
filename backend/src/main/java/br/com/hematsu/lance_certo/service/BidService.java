@@ -91,9 +91,9 @@ public class BidService {
         return bids.map(bidMapper::bidToBidResponseDTO);
     }
 
-    public List<BidResponseDTO> findBidsByBidder(Long BidderId) {
+    public List<BidResponseDTO> findBidsByBidder(Long bidderId) {
 
-        List<Bid> bids = bidRepository.findByBidderId(BidderId);
+        List<Bid> bids = bidRepository.findByBidderId(bidderId);
 
         return bids.stream().map(bidMapper::bidToBidResponseDTO).toList();
     }

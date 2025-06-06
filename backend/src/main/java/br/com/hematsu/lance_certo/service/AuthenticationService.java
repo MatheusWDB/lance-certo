@@ -22,18 +22,14 @@ public class AuthenticationService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
 
-        User user = userRepository.findByLogin(login)
-                .orElseThrow(() -> new UsernameNotFoundException("Email ou username, '" + login + "', não encontrado!"));
-                
-        return user;
+        return userRepository.findByLogin(login)
+                .orElseThrow(() -> new UsernameNotFoundException("Email ou username, '" + login + "', não encontrado!"));                
     }
 
     public Long getIdByAuthentication(){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User authenticatedUser = (User) authentication.getPrincipal();
-        Long id = authenticatedUser.getId();
-
-        return id;
+        return authenticatedUser.getId();
     }
 }

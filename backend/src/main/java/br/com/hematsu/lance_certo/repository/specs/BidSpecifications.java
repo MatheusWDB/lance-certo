@@ -9,18 +9,15 @@ import br.com.hematsu.lance_certo.model.Bid;
 
 public class BidSpecifications {
 
-    public static Specification<Bid> bidId(Long bidderId) {
+    private BidSpecifications(){        
+    }
 
-        return (root, query, criteriaBuilder) -> {
-            return criteriaBuilder.equal(root.get("bidder").get("id"), bidderId);
-        };
+    public static Specification<Bid> bidId(Long bidderId) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("bidder").get("id"), bidderId);
     }
 
     public static Specification<Bid> auctionId(Long auctionId) {
-
-        return (root, query, criteriaBuilder) -> {
-            return criteriaBuilder.equal(root.get("auction").get("id"), auctionId);
-        };
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("auction").get("id"), auctionId);
     }
 
     public static Specification<Bid> withFilters(String entity, Long id) {

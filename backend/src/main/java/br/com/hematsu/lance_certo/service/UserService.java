@@ -13,21 +13,25 @@ import br.com.hematsu.lance_certo.exception.user.UserAlreadyExistsException;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.repository.UserRepository;
+import jakarta.annotation.Resource;
 
 @Service
 public class UserService {
 
+    @Resource
+    private UserService userService;
+
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;    
 
     public UserService(
             UserRepository userRepository,
             UserMapper userMapper,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager) {
-                
+
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.userMapper = userMapper;
@@ -37,7 +41,8 @@ public class UserService {
     @Transactional
     public void registerUser(UserRegistrationRequestDTO registrationDTO) {
 
-        if (doesUsernameOrEmailAlreadyExist(registrationDTO.username(), registrationDTO.email())) {
+        Boolean doesAlreadyExist = this.doesUsernameOrEmailAlreadyExist(registrationDTO.username(), registrationDTO.email());
+        if (Boolean.TRUE.equals(doesAlreadyExist)) {
             throw new UserAlreadyExistsException();
         }
 
@@ -46,7 +51,7 @@ public class UserService {
         String encodedPassword = encodePassword(registrationDTO.password());
         newUser.setPassword(encodedPassword);
 
-        save(newUser);
+        userService.save(newUser);
     }
 
     public User findById(Long id) {
@@ -63,11 +68,14 @@ public class UserService {
     }
 
     public Boolean doesUsernameOrEmailAlreadyExist(String username, String email) {
+
+        Boolean doesAlreadyExist = false;
+
         if (userRepository.findByLogin(username).isPresent() || userRepository.findByLogin(email).isPresent()) {
-            return true;
+            doesAlreadyExist = true;
         }
 
-        return false;
+        return doesAlreadyExist;
     }
 
     public Authentication authenticate(String login, String password) {

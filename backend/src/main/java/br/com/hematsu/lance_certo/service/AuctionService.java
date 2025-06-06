@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -135,7 +134,7 @@ public class AuctionService {
                     .filter(s -> !s.isEmpty())
                     .map(s -> AuctionStatus.valueOf(s.toUpperCase()))
                     .filter(s -> s != null)
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         Specification<Auction> spec = AuctionSpecifications.withFilters(

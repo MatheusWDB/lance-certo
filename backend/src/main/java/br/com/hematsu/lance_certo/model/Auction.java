@@ -1,5 +1,6 @@
 package br.com.hematsu.lance_certo.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,56 +26,57 @@ import lombok.Data;
 
 @Data
 @Entity(name = "tb_auctions")
-public class Auction {
+public class Auction implements Serializable {
+  private static final long serialVersionUID = 2405172041950251807L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "product_id", nullable = false)
+  private Product product;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seller_id", nullable = false)
-    private User seller;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "seller_id", nullable = false)
+  private User seller;
 
-    @Column(nullable = false)
-    private LocalDateTime startTime;
+  @Column(nullable = false)
+  private LocalDateTime startTime;
 
-    @Column(nullable = false)
-    private LocalDateTime endTime;
+  @Column(nullable = false)
+  private LocalDateTime endTime;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal initialPrice;
+  @Column(nullable = false, precision = 19, scale = 2)
+  private BigDecimal initialPrice;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal minimunBidIncrement;
+  @Column(nullable = false, precision = 19, scale = 2)
+  private BigDecimal minimunBidIncrement;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal currentBid;
+  @Column(nullable = false, precision = 19, scale = 2)
+  private BigDecimal currentBid;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name ="current_bidder_id")
-    private User currentBidder;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "current_bidder_id")
+  private User currentBidder;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AuctionStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private AuctionStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "winner_id")
-    private User winner;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "winner_id")
+  private User winner;
 
-    @CreationTimestamp
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+  @CreationTimestamp
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+  @UpdateTimestamp
+  @Column(nullable = false)
+  private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("amount Desc, createdAt ASC")
-    private List<Bid> bids;
+  @OneToMany(mappedBy = "auction", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OrderBy("amount Desc, createdAt ASC")
+  private List<Bid> bids;
 }

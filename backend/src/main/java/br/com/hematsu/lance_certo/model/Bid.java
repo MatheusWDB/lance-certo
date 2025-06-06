@@ -1,5 +1,6 @@
 package br.com.hematsu.lance_certo.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -17,7 +18,8 @@ import lombok.Data;
 
 @Data
 @Entity(name = "tb_bids")
-public class Bid {
+public class Bid implements Serializable {
+    private static final long serialVersionUID = 2405172041950251807L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +41,7 @@ public class Bid {
     private LocalDateTime createdAt;
 
     public Bid() {
-        
+
     }
 
     public Bid(Auction auction, User bidder, BigDecimal amount) {

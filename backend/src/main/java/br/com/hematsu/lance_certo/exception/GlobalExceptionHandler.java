@@ -1,7 +1,6 @@
 package br.com.hematsu.lance_certo.exception;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
@@ -130,7 +129,7 @@ public class GlobalExceptionHandler {
                 .getAllErrors()
                 .stream()
                 .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .collect(Collectors.toList());
+                .toList();
         StandardError err = new StandardError(status, error, "Validation Failed", validationErrors,
                 request.getRequestURI());
         return ResponseEntity.status(status).body(err);

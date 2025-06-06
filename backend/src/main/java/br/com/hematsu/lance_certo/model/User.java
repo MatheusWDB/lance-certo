@@ -24,6 +24,7 @@ import lombok.Data;
 @Data
 @Entity(name = "tb_users")
 public class User implements UserDetails {
+    private static final long serialVersionUID = 2405172041950251807L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,7 +68,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        
+
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + this.role.name());
         return Collections.singletonList(authority);
     }
