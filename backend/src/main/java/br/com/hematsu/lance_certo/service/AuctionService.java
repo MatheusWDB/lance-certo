@@ -167,7 +167,7 @@ public class AuctionService {
 
         User seller = userService.findById(sellerId);
 
-        Auction auction = findById(auctionId);
+        Auction auction = this.findById(auctionId);
 
         if (!auction.getSeller().equals(seller)) {
             throw new NotAuctionOwnerException();

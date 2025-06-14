@@ -3,11 +3,12 @@ package br.com.hematsu.lance_certo.dto.auction;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record AuctionFilterParamsDTO(String productName,
-        String productCategory,
+public record AuctionFilterParamsDTO(
+        String productName,
+        String productCategories,
         String sellerName,
         String winnerName,
-        String status,
+        String statuses,
         BigDecimal minInitialPrice,
         BigDecimal maxInitialPrice,
         BigDecimal minCurrentBid,

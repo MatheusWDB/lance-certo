@@ -151,14 +151,14 @@ public class AuctionSpecifications {
     public static Specification<Auction> withFilters(AuctionFilterParamsDTO auctionFilterParamsDTO) {
 
        List<String> productCategories = null;
-        if (auctionFilterParamsDTO.productCategory() != null && !auctionFilterParamsDTO.productCategory().trim().isEmpty()) {
-            productCategories = Arrays.stream(auctionFilterParamsDTO.productCategory().split(","))
+        if (auctionFilterParamsDTO.productCategories() != null && !auctionFilterParamsDTO.productCategories().trim().isEmpty()) {
+            productCategories = Arrays.stream(auctionFilterParamsDTO.productCategories().split(","))
                     .map(String::trim).toList();
         }
 
         List<AuctionStatus> statuses = null;
-        if (auctionFilterParamsDTO.status() != null && !auctionFilterParamsDTO.status().trim().isEmpty()) {
-            statuses = Arrays.stream(auctionFilterParamsDTO.status().split(","))
+        if (auctionFilterParamsDTO.statuses() != null && !auctionFilterParamsDTO.statuses().trim().isEmpty()) {
+            statuses = Arrays.stream(auctionFilterParamsDTO.statuses().split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
                     .map(s -> AuctionStatus.valueOf(s.toUpperCase()))
