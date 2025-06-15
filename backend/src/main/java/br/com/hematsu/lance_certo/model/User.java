@@ -20,8 +20,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Entity(name = "tb_users")
 public class User implements UserDetails {
     private static final long serialVersionUID = 2405172041950251807L;

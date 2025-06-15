@@ -15,8 +15,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Entity(name = "tb_bids")
 public class Bid implements Serializable {
     private static final long serialVersionUID = 2405172041950251807L;
@@ -39,10 +41,6 @@ public class Bid implements Serializable {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    public Bid() {
-
-    }
 
     public Bid(Auction auction, User bidder, BigDecimal amount) {
         this.auction = auction;

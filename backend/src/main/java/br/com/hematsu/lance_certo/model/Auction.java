@@ -23,8 +23,10 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Entity(name = "tb_auctions")
 public class Auction implements Serializable {
   private static final long serialVersionUID = 2405172041950251807L;

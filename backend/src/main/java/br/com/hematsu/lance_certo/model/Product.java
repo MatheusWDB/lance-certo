@@ -17,8 +17,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Entity(name = "tb_products")
 public class Product implements Serializable {
     private static final long serialVersionUID = 2405172041950251807L;
