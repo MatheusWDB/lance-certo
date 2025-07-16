@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lance_certo/widgets/auction_list.dart';
+import 'package:lance_certo/widgets/main_menu.dart';
 import 'package:lance_certo/widgets/new_auction_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            MainMenu(currentRoute: '/home'),
             Padding(
               padding: const EdgeInsets.all(32.0),
               child: Row(
