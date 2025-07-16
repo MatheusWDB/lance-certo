@@ -4,10 +4,10 @@ class AuctionList extends StatefulWidget {
   const AuctionList({super.key});
 
   @override
-  State<AuctionList> createState() => _AuctionListItemState();
+  State<AuctionList> createState() => _AuctionListState();
 }
 
-class _AuctionListItemState extends State<AuctionList> {
+class _AuctionListState extends State<AuctionList> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
