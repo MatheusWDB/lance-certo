@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lance_certo/widgets/auction_list_item.dart';
+import 'package:lance_certo/widgets/auction_list.dart';
+import 'package:lance_certo/widgets/new_auction_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,28 +15,35 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                Text('Leilões Ativos'),
-                TextField(
-                  decoration: InputDecoration(label: Text('Buscar leilões...')),
-                ),
-                TextButton(onPressed: () {}, child: Text('+ Novo Leilão')),
-              ],
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(64.0),
-                child: Column(
-                  children: [
-                    ListView.builder(
-                      itemCount: 1,
-                      itemBuilder: (context, index) => AuctionListItem(),
+            Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Row(
+                spacing: 64,
+                children: [
+                  Text('Leilões Ativos'),
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        label: Text('Buscar leilões...'),
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (context) => NewAuctionDialog(),
+                    ),
+                    child: Text('+ Novo Leilão'),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: 5,
+                itemBuilder: (context, index) => AuctionList(),
               ),
             ),
           ],
