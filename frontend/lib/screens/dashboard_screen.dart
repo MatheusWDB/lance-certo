@@ -2,15 +2,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:lance_certo/widgets/dashboard_list.dart';
+import 'package:lance_certo/widgets/main_menu.dart';
 
-class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
 
   @override
-  State<Dashboard> createState() => _DashboardState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardState extends State<Dashboard> {
+class _DashboardScreenState extends State<DashboardScreen> {
   String activeMenu = 'myBids';
 
   @override
@@ -20,6 +21,7 @@ class _DashboardState extends State<Dashboard> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            MainMenu(currentRoute: '/dashboard'),
             Text('Meu Dashboard'),
             Row(
               children: [
@@ -48,7 +50,7 @@ class _DashboardState extends State<Dashboard> {
                 children: [
                   Text(_getMenuTitle()),
                   Expanded(
-                    child: ListView.builder(                      
+                    child: ListView.builder(
                       itemCount: 2,
                       itemBuilder: (context, index) =>
                           DashboardList(activeMenu: activeMenu),
