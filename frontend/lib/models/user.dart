@@ -30,8 +30,7 @@ class User {
       email: json['email'],
       name: json['name'],
       phone: json['phone'],
-      role: UserRole.values[json['role']],
-      token: json['token'],
+      role: UserRole.fromString(json['role']),
     );
   }
 
