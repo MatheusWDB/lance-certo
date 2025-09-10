@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lance_certo/models/user.dart';
 import 'package:lance_certo/screens/home_screen.dart';
+import 'package:lance_certo/services/user_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -86,7 +88,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           });
                         },
                       ),
-                      ElevatedButton(onPressed: () {}, child: Text('Login')),
+                      ElevatedButton(
+                        onPressed: () => login(),
+                        child: Text('Login'),
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -133,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
     }
-
+    
     if (controller['password']!.text.length < 8) {
       setState(() {
         error['password'] = 'A senha tem no mínimo 8 caracteres';
@@ -141,15 +146,25 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    resetController();
-    resetError();
-
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    final User user = User(
+      username: controller['username']!.text,
+      password: controller['password']!.text,
     );
+
+    try {
+      await UserService.login(user, controller['username']!.text);
+      resetController();
+      resetError();
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } catch (e) {
+      debugPrint('Erro ao logar: $e');
+    }
   }
 
   void resetController() {
