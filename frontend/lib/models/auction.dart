@@ -1,4 +1,4 @@
-import 'package:lance_certo/models/auctionStatus.dart';
+import 'package:lance_certo/models/auction_status.dart';
 import 'package:lance_certo/models/product.dart';
 import 'package:lance_certo/models/user.dart';
 

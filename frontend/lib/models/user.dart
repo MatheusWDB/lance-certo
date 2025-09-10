@@ -1,4 +1,4 @@
-import 'package:lance_certo/models/userRole.dart';
+import 'package:lance_certo/models/user_role.dart';
 
 class User {
   User({
