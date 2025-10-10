@@ -61,7 +61,6 @@ public class UserController {
         UserTokenResponseDTO userDTO = new UserTokenResponseDTO(token, userMapper.toUserResponseDTO(user));
 
         return ResponseEntity.status(HttpStatus.OK).body(userDTO);
-
     }
 
     @GetMapping("/users")

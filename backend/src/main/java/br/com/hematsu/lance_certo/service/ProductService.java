@@ -33,7 +33,6 @@ public class ProductService {
 
     @Transactional
     public void createProduct(ProductRequestDTO productDTO, Long sellerId) {
-
         User seller = userService.findById(sellerId);
 
         Product product = productMapper.toProduct(productDTO);
@@ -49,7 +48,6 @@ public class ProductService {
     }
 
     public List<ProductResponseDTO> findProductsBySeller(Long sellerId) {
-
         List<Product> products = productRepository.findBySellerId(sellerId);
         return products.stream().map(productMapper::toProductResponseDTO).toList();
     }
