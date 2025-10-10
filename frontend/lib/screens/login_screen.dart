@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lance_certo/models/user.dart';
 import 'package:lance_certo/screens/home_screen.dart';
+import 'package:lance_certo/screens/registration_screen.dart';
 import 'package:lance_certo/services/user_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -11,45 +11,176 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool _isLoading = false;
+
   Map<String, TextEditingController> controller = {
-    'username': TextEditingController(),
-    'password': TextEditingController(),
+    'username': TextEditingController(text: 'buyer@gmail.com'),
+    'password': TextEditingController(text: '12345678'),
   };
   Map<String, String?> error = {'username': null, 'password': null};
 
   bool viewPassword = false;
 
+  void login() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final attributes = ['username', 'password'];
+
+    for (var attribute in attributes) {
+      if (controller[attribute]!.text.isEmpty) {
+        setState(() {
+          error[attribute] = 'Campo requerido';
+
+          _isLoading = false;
+        });
+        return;
+      }
+    }
+
+    /** 
+    if (!controller['username']!.text.contains('@') ||
+        !controller['username']!.text.contains('.')) {
+      final int atIndex = controller['username']!.text.indexOf('@');
+      final int dotIndex = controller['username']!.text.lastIndexOf('.');
+      if (atIndex < 1 ||
+          dotIndex < atIndex + 2 ||
+          dotIndex == controller['username']!.text.length - 1) {
+        setState(() {
+          error['username'] = 'Inválido';
+          
+          _isLoading = false;
+        });
+        return;
+      }
+    }
+    */
+
+    if (controller['password']!.text.length < 8) {
+      setState(() {
+        error['password'] = 'A senha tem no mínimo 8 caracteres';
+
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      await UserService.login(
+        controller['username']!.text,
+        controller['password']!.text,
+      );
+      resetController();
+      resetError();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } catch (e) {
+      debugPrint('Erro ao logar: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        final String errorMessage = e.toString();
+        final String cleanMessage = errorMessage.replaceFirst(
+          'Exception: ',
+          '',
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(cleanMessage, textAlign: TextAlign.center),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void resetController() {
+    setState(() {
+      controller['username']?.clear();
+      controller['password']?.clear();
+    });
+  }
+
+  void resetError() {
+    setState(() {
+      error['username'] = null;
+      error['password'] = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.forEach((key, value) => value.dispose());
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Flexible(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(64.0),
+            Container(
+              decoration: const BoxDecoration(color: Color(0xFFE2E8F0)),
+              child: Center(
                 child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.376,
+                  ),
+                  height: MediaQuery.of(context).size.height * 0.51,
+                  padding: const EdgeInsets.all(32.0),
+                  margin: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(blurStyle: BlurStyle.outer, blurRadius: 8),
-                    ],
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    boxShadow: const [BoxShadow(blurRadius: 10.0)],
                   ),
                   child: Column(
-                    spacing: 8,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    spacing: 20.0,
                     children: [
-                      Text('Bem-vindo ao Lance Certo'),
-                      Text('Entrar'),
+                      const Text(
+                        'Bem-vindo ao Lance Certo',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 32.0,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const Text(
+                        'Entrar',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       TextField(
                         autofocus: true,
                         controller: controller['username'],
                         decoration: InputDecoration(
+                          errorText: error['username'],
+                          labelText: 'Email ou Nome de Usuário',
+                          //constraints: BoxConstraints(maxWidth: 300.0),
                           border: OutlineInputBorder(
                             borderSide: const BorderSide(width: 2),
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          errorText: error['username'],
-                          labelText: 'Email',
                         ),
                         onChanged: (value) {
                           setState(() {
@@ -61,12 +192,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         autocorrect: false,
                         controller: controller['password'],
                         decoration: InputDecoration(
+                          errorText: error['password'],
+                          labelText: 'Senha',
+                          //constraints: BoxConstraints(maxWidth: 300.0),
                           border: OutlineInputBorder(
                             borderSide: const BorderSide(width: 2),
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          errorText: error['password'],
-                          labelText: 'Senha',
                           suffixIcon: IconButton(
                             onPressed: () {
                               setState(() {
@@ -89,16 +221,49 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 52.0,
+                            vertical: 16.0,
+                          ),
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
                         onPressed: () => login(),
-                        child: Text('Login'),
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Não tem uma conta?'),
+                          const Text('Não tem uma conta?'),
                           TextButton(
-                            onPressed: () {},
-                            child: Text('Registre-se aqui'),
+                            onPressed: () {
+                              resetController();
+                              resetError();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const RegistrationScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'Registre-se aqui',
+                              style: TextStyle(
+                                color: Color(0xFF2563EB),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -107,77 +272,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
+            if (_isLoading) ...[
+              ModalBarrier(
+                dismissible: false,
+                color: Colors.black.withValues(alpha: 0.4),
+              ),
+              const Center(child: CircularProgressIndicator()),
+            ],
           ],
         ),
       ),
     );
-  }
-
-  void login() async {
-    final attributes = ['username', 'password'];
-
-    for (var attribute in attributes) {
-      if (controller[attribute]!.text.isEmpty) {
-        setState(() {
-          error[attribute] = 'Campo requerido';
-        });
-        return;
-      }
-    }
-
-    if (!controller['username']!.text.contains('@') ||
-        !controller['username']!.text.contains('.')) {
-      final int atIndex = controller['username']!.text.indexOf('@');
-      final int dotIndex = controller['username']!.text.lastIndexOf('.');
-      if (atIndex < 1 ||
-          dotIndex < atIndex + 2 ||
-          dotIndex == controller['username']!.text.length - 1) {
-        setState(() {
-          error['username'] = 'Inválido';
-        });
-        return;
-      }
-    }
-    
-    if (controller['password']!.text.length < 8) {
-      setState(() {
-        error['password'] = 'A senha tem no mínimo 8 caracteres';
-      });
-      return;
-    }
-
-    final User user = User(
-      username: controller['username']!.text,
-      password: controller['password']!.text,
-    );
-
-    try {
-      await UserService.login(user, controller['username']!.text);
-      resetController();
-      resetError();
-
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } catch (e) {
-      debugPrint('Erro ao logar: $e');
-    }
-  }
-
-  void resetController() {
-    setState(() {
-      controller['username']?.clear();
-      controller['password']?.clear();
-    });
-  }
-
-  void resetError() {
-    setState(() {
-      error['username'] = null;
-      error['password'] = null;
-    });
   }
 }
