@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lance_certo/screens/dashboard_screen.dart';
 import 'package:lance_certo/screens/home_screen.dart';
 
-class MainMenu extends StatelessWidget {
-  const MainMenu({required this.currentRoute, super.key});
+class MainMenuWidget extends StatelessWidget {
+  const MainMenuWidget({required this.currentRoute, super.key});
 
   final String currentRoute;
 
@@ -21,16 +21,16 @@ class MainMenu extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => const HomeScreen()),
                 );
               },
-              child: Text('Início', style: style('/home')),
+              child: Text('Início', style: _style('/home')),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => DashboardScreen()),
+                  MaterialPageRoute(builder: (context) => const DashboardScreen()),
                 );
               },
-              child: Text('Produtos', style: style('/dashboard')),
+              child: Text('Minha Área', style: _style('/dashboard')),
             ),
           ],
         ),
@@ -39,12 +39,13 @@ class MainMenu extends StatelessWidget {
     );
   }
 
-  TextStyle style(String route) {
+  TextStyle _style(String route) {
     return TextStyle(
       color: currentRoute == route
-          ? const Color(0xFF551A8B)
-          : const Color(0xFF0000EE),
+          ? const Color(0xFF2563EB)
+          : const Color(0xFF4B5563),
       fontWeight: currentRoute == route ? FontWeight.bold : FontWeight.normal,
+      fontSize: 16.0,
     );
   }
 }
