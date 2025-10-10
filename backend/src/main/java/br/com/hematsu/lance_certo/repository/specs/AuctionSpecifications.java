@@ -27,6 +27,15 @@ public class AuctionSpecifications {
         };
     }
 
+    public static Specification<Auction> sellerIdEquals(Long sellerId) {
+        return (root, query, criteriaBuilder) -> {
+            if (sellerId == null) {
+                return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
+            }
+            return criteriaBuilder.equal(root.get("seller").get("id"), sellerId);
+        };
+    }
+
     public static Specification<Auction> productNameLike(String productName) {
         return (root, query, criteriaBuilder) -> {
             if (productName == null || productName.trim().isEmpty()) {
@@ -168,6 +177,7 @@ public class AuctionSpecifications {
 
         List<Specification<Auction>> specs = new ArrayList<>();
 
+        specs.add(sellerIdEquals(auctionFilterParamsDTO.sellerId()));
         specs.add(productNameLike(auctionFilterParamsDTO.productName()));
         specs.add(productCategoryIn(productCategories));
         specs.add(sellerNameLike(auctionFilterParamsDTO.sellerName()));

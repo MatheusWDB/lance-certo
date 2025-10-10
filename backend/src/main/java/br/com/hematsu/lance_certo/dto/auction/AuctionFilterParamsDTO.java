@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record AuctionFilterParamsDTO(
+        Long sellerId,
         String productName,
         String productCategories,
         String sellerName,
