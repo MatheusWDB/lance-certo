@@ -21,10 +21,12 @@ import br.com.hematsu.lance_certo.mapper.ProductMapper;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.Auction;
 import br.com.hematsu.lance_certo.model.AuctionStatus;
+import br.com.hematsu.lance_certo.model.Bid;
 import br.com.hematsu.lance_certo.model.Product;
 import br.com.hematsu.lance_certo.model.User;
 import br.com.hematsu.lance_certo.model.UserRole;
 import br.com.hematsu.lance_certo.repository.AuctionRepository;
+import br.com.hematsu.lance_certo.repository.BidRepository;
 import br.com.hematsu.lance_certo.repository.ProductRepository;
 import br.com.hematsu.lance_certo.repository.UserRepository;
 
@@ -38,6 +40,7 @@ public class TestConfig implements CommandLineRunner {
         private final UserRepository userRepository;
         private final ProductRepository productRepository;
         private final AuctionRepository auctionRepository;
+        private final BidRepository bidRepository;
         private final UserMapper userMapper;
         private final ProductMapper productMapper;
         private final AuctionMapper auctionMapper;
@@ -47,6 +50,7 @@ public class TestConfig implements CommandLineRunner {
                         UserRepository userRepository,
                         ProductRepository productRepository,
                         AuctionRepository auctionRepository,
+                        BidRepository bidRepository,
                         UserMapper userMapper,
                         ProductMapper productMapper,
                         AuctionMapper auctionMapper,
@@ -55,6 +59,7 @@ public class TestConfig implements CommandLineRunner {
                 this.userRepository = userRepository;
                 this.productRepository = productRepository;
                 this.auctionRepository = auctionRepository;
+                this.bidRepository = bidRepository;
                 this.userMapper = userMapper;
                 this.productMapper = productMapper;
                 this.auctionMapper = auctionMapper;
@@ -97,6 +102,8 @@ public class TestConfig implements CommandLineRunner {
                                 userMapper.toUser(createUserBuyer)));
 
                 User userSeller = userRepository.findByLogin("seller@gmail.com").orElse(null);
+                User userBuyer = userRepository.findByLogin("buyer@gmail.com").orElse(null);
+                User userAdmin = userRepository.findByLogin("admin@gmail.com").orElse(null);
 
                 // Criar produtos
                 List<Product> createdProducts = new ArrayList<>();
@@ -141,11 +148,14 @@ public class TestConfig implements CommandLineRunner {
                 // Criar leilões
                 List<Auction> createdAuctions = new ArrayList<>();
 
-                LocalDateTime fixedStartTime = LocalDateTime.now().plusSeconds(30);
-                LocalDateTime fixedEndTime = LocalDateTime.now().plusMinutes(10);
+                // LocalDateTime fixedStartTime = LocalDateTime.now().plusSeconds(1); // Manter o startTime fixo ou variar também
+                LocalDateTime baseTime = LocalDateTime.now(); // Tempo base para cálculo
+                // Podemos variar o startTime também, ou mantê-lo próximo do now()
+                LocalDateTime currentStartTime = baseTime.minusMinutes(1); // Exemplo: 1 minuto no passado para ele iniciar logo
+
                 BigDecimal fixedCurrentBid = BigDecimal.ZERO;
                 User fixedCurrentBidder = null;
-                AuctionStatus fixedStatus = AuctionStatus.PENDING;
+                AuctionStatus fixedStatus = AuctionStatus.PENDING; // Status inicial PENDING
 
                 for (int i = 0; i < 15; i++) {
 
@@ -158,14 +168,30 @@ public class TestConfig implements CommandLineRunner {
                                         .valueOf(ThreadLocalRandom.current().nextDouble(5.0, 200.0))
                                         .setScale(2, RoundingMode.HALF_UP);
 
+                        // *** NOVO: Calcular endTime aleatório entre 2 e 15 minutos ***
+                        // Gera um número aleatório de minutos entre 2 e 15 (inclusive)
+                        int randomMinutesToAdd = ThreadLocalRandom.current().nextInt(2, 31); // maxExclusive, então 16 para incluir 15
+                        LocalDateTime dynamicEndTime = baseTime.plusMinutes(randomMinutesToAdd);
+
+                        // Ajuste startTime para ser antes do dynamicEndTime se baseTime é o mesmo
+                        // Se currentStartTime é fixo no passado, OK.
+                        // Se você quiser que o leilão comece AGORA, use LocalDateTime.now() para startTime
+                        LocalDateTime auctionStartTime = currentStartTime; // Ou LocalDateTime.now();
+
+                        // Certifique-se que endTime seja sempre depois de startTime para o DTO
+                        if (auctionStartTime.isAfter(dynamicEndTime)) {
+                           dynamicEndTime = auctionStartTime.plusMinutes(randomMinutesToAdd); // Ajusta se startTime for depois
+                        }
+
+
                         AuctionCreateRequestDTO auctionDto = new AuctionCreateRequestDTO(
                                         associatedProduct.getId(),
-                                        fixedStartTime,
-                                        fixedEndTime,
+                                        auctionStartTime, // Usando o startTime calculado
+                                        dynamicEndTime, // *** Usando o endTime dinâmico ***
                                         initialPrice,
                                         minBidIncrement);
 
-                        Auction auction = auctionMapper.toAuction(auctionDto);
+                        Auction auction = auctionMapper.toAuction(auctionDto); // mapper.toAuction()
                         auction.setSeller(userSeller);
                         auction.setProduct(associatedProduct);
                         auction.setStatus(fixedStatus);
@@ -176,6 +202,30 @@ public class TestConfig implements CommandLineRunner {
                 }
                 
                 auctionRepository.saveAll(createdAuctions);
+
+                 // --- NOVO: Criar Lances de Teste ---
+                // Pegar o primeiro leilão criado para os lances de teste
+                Auction targetAuction = auctionRepository.findById(1L).orElse(null);
+
+                // 1. Lance do UserBuyer
+                BigDecimal bidAmountBuyer = targetAuction.getInitialPrice().add(targetAuction.getMinimunBidIncrement()); // Lance inicial + incremento
+                Bid bidBuyer = new Bid(targetAuction, userBuyer, bidAmountBuyer);
+                bidRepository.save(bidBuyer);
+
+                // Atualizar o leilão com o primeiro lance
+                targetAuction.setCurrentBid(bidAmountBuyer);
+                targetAuction.setCurrentBidder(userBuyer);
+                auctionRepository.save(targetAuction); // Salva a atualização do leilão
+
+                // 2. Lance do UserAdmin (lance maior)
+                BigDecimal bidAmountAdmin = bidAmountBuyer.add(targetAuction.getMinimunBidIncrement()).add(BigDecimal.valueOf(10.0)); // Mais que o anterior + incremento, mais 10
+                Bid bidAdmin = new Bid(targetAuction, userAdmin, bidAmountAdmin);
+                bidRepository.save(bidAdmin);
+
+                // Atualizar o leilão com o segundo lance
+                targetAuction.setCurrentBid(bidAmountAdmin);
+                targetAuction.setCurrentBidder(userAdmin);
+                auctionRepository.save(targetAuction); // Salva a atualização do leilão
         }
 
 }
