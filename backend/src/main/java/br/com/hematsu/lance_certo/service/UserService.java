@@ -12,8 +12,8 @@ import br.com.hematsu.lance_certo.exception.ResourceNotFoundException;
 import br.com.hematsu.lance_certo.exception.user.UserAlreadyExistsException;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.User;
+import br.com.hematsu.lance_certo.model.UserRole;
 import br.com.hematsu.lance_certo.repository.UserRepository;
-
 
 @Service
 public class UserService {
@@ -21,7 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;    
+    private final AuthenticationManager authenticationManager;
 
     public UserService(
             UserRepository userRepository,
@@ -38,12 +38,17 @@ public class UserService {
     @Transactional
     public void registerUser(UserRegistrationRequestDTO registrationDTO) {
 
-        Boolean doesAlreadyExist = this.doesUsernameOrEmailAlreadyExist(registrationDTO.username(), registrationDTO.email());
+        Boolean doesAlreadyExist = this.doesUsernameOrEmailAlreadyExist(registrationDTO.username(),
+                registrationDTO.email());
         if (Boolean.TRUE.equals(doesAlreadyExist)) {
             throw new UserAlreadyExistsException();
         }
 
         User newUser = userMapper.toUser(registrationDTO);
+
+        if (newUser.getRole() == null) {
+            newUser.setRole(UserRole.BUYER);
+        }
 
         String encodedPassword = encodePassword(registrationDTO.password());
         newUser.setPassword(encodedPassword);

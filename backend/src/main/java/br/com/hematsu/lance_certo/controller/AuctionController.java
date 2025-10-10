@@ -1,7 +1,5 @@
 package br.com.hematsu.lance_certo.controller;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -55,18 +53,31 @@ public class AuctionController {
     }
 
     @GetMapping("/auctions/seller")
-    public ResponseEntity<List<AuctionDetailsResponseDTO>> getMyAuctions() {
+    public ResponseEntity<Page<AuctionDetailsResponseDTO>> getMyAuctions() {
+
+        auctionService.processEndingAuctions();
+        auctionService.processPendingAuctions();
 
         Long sellerId = authenticationService.getIdByAuthentication();
 
-        List<AuctionDetailsResponseDTO> auctions = auctionService.findAuctionsBySellerId(sellerId);
-        return ResponseEntity.status(HttpStatus.OK).body(auctions);
+        AuctionFilterParamsDTO auctionFilterParamsDTO = new AuctionFilterParamsDTO(sellerId, null, null, null, null,
+                null, null, null, null, null, null, null, null, null);
+        Pageable pageable = Pageable.unpaged();
+
+        Page<AuctionDetailsResponseDTO> auctionPage = auctionService.searchAndFilterAuctions(
+                auctionFilterParamsDTO,
+                pageable);
+
+        return ResponseEntity.status(HttpStatus.OK).body(auctionPage);
     }
 
     @GetMapping("/auctions")
     public ResponseEntity<Page<AuctionDetailsResponseDTO>> searchAndFilterAuctions(
             AuctionFilterParamsDTO auctionFilterParamsDTO,
             Pageable pageable) {
+
+        auctionService.processEndingAuctions();
+        auctionService.processPendingAuctions();
 
         Page<AuctionDetailsResponseDTO> auctionPage = auctionService.searchAndFilterAuctions(
                 auctionFilterParamsDTO,
@@ -83,4 +94,5 @@ public class AuctionController {
         auctionService.cancelAuction(id, sellerId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
 }

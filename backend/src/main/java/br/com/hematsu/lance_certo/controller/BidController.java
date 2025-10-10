@@ -2,6 +2,7 @@ package br.com.hematsu.lance_certo.controller;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.hematsu.lance_certo.dto.bid.BidFilterParamsDTO;
 import br.com.hematsu.lance_certo.dto.bid.BidResponseDTO;
 import br.com.hematsu.lance_certo.dto.bid.PlaceBidRequestDTO;
+import br.com.hematsu.lance_certo.service.AuctionService;
 import br.com.hematsu.lance_certo.service.AuthenticationService;
 import br.com.hematsu.lance_certo.service.BidService;
 import jakarta.validation.Valid;
@@ -23,10 +25,13 @@ import jakarta.validation.Valid;
 public class BidController {
 
     private final BidService bidService;
+    private final AuctionService auctionService;
     private final AuthenticationService authenticationService;
 
-    public BidController(BidService bidService, AuthenticationService authenticationService) {
+    public BidController(BidService bidService, AuctionService auctionService,
+            AuthenticationService authenticationService) {
         this.bidService = bidService;
+        this.auctionService = auctionService;
         this.authenticationService = authenticationService;
     }
 
@@ -42,15 +47,19 @@ public class BidController {
     @GetMapping("/bids/auctions/{auctionId}")
     public ResponseEntity<Page<BidResponseDTO>> getBidHistoryForAuction(
             @PathVariable Long auctionId,
-            BidFilterParamsDTO bidParam,
-            Pageable pageable) {
+            BidFilterParamsDTO bidParam) {
+
+        Pageable pageable = Pageable.unpaged(Sort.by("amount").descending());
 
         Page<BidResponseDTO> bids = bidService.findBids(bidParam, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(bids);
     }
 
-    @GetMapping("/bids")
+    @GetMapping("/bids/bidder")
     public ResponseEntity<Page<BidResponseDTO>> findMyBids(Pageable pageable) {
+
+        auctionService.processEndingAuctions();
+        auctionService.processPendingAuctions();
 
         Long bidderId = authenticationService.getIdByAuthentication();
         BidFilterParamsDTO bidParam = new BidFilterParamsDTO(bidderId, null);
