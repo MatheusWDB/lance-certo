@@ -1,10 +1,10 @@
 // ignore_for_file: constant_identifier_names
 
 enum AuctionStatus {
-  PENDING('', 0),
-  ACTIVE('', 1),
-  CLOSED('', 2),
-  CANCELLED('', 3);
+  PENDING('Pendente', 0),
+  ACTIVE('Ativo', 1),
+  CLOSED('Fechado', 2),
+  CANCELLED('Cancelado', 3);
 
   final String displayName;
   final int code;

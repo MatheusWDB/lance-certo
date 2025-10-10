@@ -6,25 +6,31 @@ class Product {
     required this.description,
     required this.category,
     this.seller,
-    this.productId,
+    this.id,
     this.imageUrl,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  final int? productId;
-  final String name;
-  final String description;
-  final String? imageUrl;
-  final String category;
+  final int? id;
+  String name;
+  String description;
+  String? imageUrl;
+  String category;
   final User? seller;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      productId: json['id'],
-      name: json['name'],
-      description: json['description'],
-      imageUrl: json['imageUrl'],
-      category: json['category'],
-      seller: json['seller'],
+      id: json['id'] as int?,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      imageUrl: json['imageUrl'] as String?,
+      category: json['category'] as String,
+      seller: json['seller'] != null
+          ? User.fromJson(json['seller'] as Map<String, dynamic>)
+          : null,
     );
   }
 
