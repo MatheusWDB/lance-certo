@@ -20,7 +20,7 @@ public record AuctionCreateRequestDTO(
         @NotNull(message = "Minimum bid increment é obrigatório!") @DecimalMin(value = "0.01", message = "Minimum bid increment precisa ser positivo") BigDecimal minimunBidIncrement) {
 
     public AuctionCreateRequestDTO {
-        if (startTime != null && endTime != null && !endTime.isAfter(startTime)) {
+        if (!endTime.isAfter(startTime)) {
             throw new IllegalArgumentException("End time precisa ser depois de start time");
         }
     }
