@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.hematsu.lance_certo.dto.user.UserRegistrationRequestDTO;
 import br.com.hematsu.lance_certo.exception.ResourceNotFoundException;
+import br.com.hematsu.lance_certo.exception.user.PhoneAlreadyExistsException;
 import br.com.hematsu.lance_certo.exception.user.UserAlreadyExistsException;
 import br.com.hematsu.lance_certo.mapper.UserMapper;
 import br.com.hematsu.lance_certo.model.User;
@@ -40,8 +41,15 @@ public class UserService {
 
         Boolean doesAlreadyExist = this.doesUsernameOrEmailAlreadyExist(registrationDTO.username(),
                 registrationDTO.email());
+
         if (Boolean.TRUE.equals(doesAlreadyExist)) {
             throw new UserAlreadyExistsException();
+        }
+
+        doesAlreadyExist = this.doesPhoneAlreadyExist(registrationDTO.phone());
+
+        if (Boolean.TRUE.equals(doesAlreadyExist)) {
+            throw new PhoneAlreadyExistsException();
         }
 
         User newUser = userMapper.toUser(registrationDTO);
@@ -74,6 +82,17 @@ public class UserService {
         Boolean doesAlreadyExist = false;
 
         if (userRepository.findByLogin(username).isPresent() || userRepository.findByLogin(email).isPresent()) {
+            doesAlreadyExist = true;
+        }
+
+        return doesAlreadyExist;
+    }
+
+    public Boolean doesPhoneAlreadyExist(String phone) {
+
+        Boolean doesAlreadyExist = false;
+
+        if (userRepository.findByPhone(phone).isPresent()) {
             doesAlreadyExist = true;
         }
 

@@ -16,6 +16,7 @@ import br.com.hematsu.lance_certo.exception.auction.AuctionCannotBeCancelledExce
 import br.com.hematsu.lance_certo.exception.auction.NotAuctionOwnerException;
 import br.com.hematsu.lance_certo.exception.auction.ProductAlreadyInAuctionException;
 import br.com.hematsu.lance_certo.exception.bid.InvalidBidException;
+import br.com.hematsu.lance_certo.exception.user.PhoneAlreadyExistsException;
 import br.com.hematsu.lance_certo.exception.user.UserAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -64,6 +65,16 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.CONFLICT;
         String error = status.getReasonPhrase();
         StandardError err = new StandardError(status, error, e.getMessage(), request.getRequestURI());
+
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(PhoneAlreadyExistsException.class)
+    public ResponseEntity<StandardError> phoneAlreadyExistsException(PhoneAlreadyExistsException e,
+            HttpServletRequest request) {
+        HttpStatus status = HttpStatus.CONFLICT;
+        String error = status.getReasonPhrase();
+        StandardError err = new StandardError(status, error, e.getMessage(), request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }
 
@@ -108,7 +119,7 @@ public class GlobalExceptionHandler {
         StandardError err = new StandardError(status, error, message, request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }
-    
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<StandardError> illegalArgumentException(
             IllegalArgumentException e, HttpServletRequest request) {
@@ -137,7 +148,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<StandardError> handleAllOtherExceptions(Exception e, HttpServletRequest request) {
-        
+
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         String error = status.getReasonPhrase();
 
