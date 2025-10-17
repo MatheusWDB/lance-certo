@@ -21,7 +21,7 @@ import br.com.hematsu.lance_certo.service.BidService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/bids")
 public class BidController {
 
     private final BidService bidService;
@@ -35,7 +35,7 @@ public class BidController {
         this.authenticationService = authenticationService;
     }
 
-    @PostMapping("/bids/auctions/{auctionId}/bidder")
+    @PostMapping("/auctions/{auctionId}/bidder")
     public ResponseEntity<Void> placeBid(@PathVariable Long auctionId, @RequestBody @Valid PlaceBidRequestDTO bidDTO) {
 
         Long bidderId = authenticationService.getIdByAuthentication();
@@ -44,7 +44,7 @@ public class BidController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/bids/auctions/{auctionId}")
+    @GetMapping("/auctions/{auctionId}")
     public ResponseEntity<Page<BidResponseDTO>> getBidHistoryForAuction(
             @PathVariable Long auctionId,
             BidFilterParamsDTO bidParam) {
@@ -55,7 +55,7 @@ public class BidController {
         return ResponseEntity.status(HttpStatus.OK).body(bids);
     }
 
-    @GetMapping("/bids/bidder")
+    @GetMapping("/bidder")
     public ResponseEntity<Page<BidResponseDTO>> findMyBids(Pageable pageable) {
 
         auctionService.processEndingAuctions();

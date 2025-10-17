@@ -53,11 +53,11 @@ public class BidService {
         if (!auction.getStatus().equals(AuctionStatus.ACTIVE)) {
             throw new InvalidBidException("O leilão ainda não iniciou!");
         }
-        if (!auction.getEndTime().isAfter(LocalDateTime.now())) {
+        if (!auction.getEndDateAndTime().isAfter(LocalDateTime.now())) {
             throw new InvalidBidException("O leilão já encerrou!");
         }
         if (auction.getSeller().equals(bidder)) {
-            throw new InvalidBidException("O vendedor não pode dá lance no próprio leilão!");
+            throw new InvalidBidException("O vendedor não pode dar lance no próprio leilão!");
         }
         if (amount.compareTo(auction.getInitialPrice().add(auction.getMinimunBidIncrement())) < 0) {
             throw new InvalidBidException(

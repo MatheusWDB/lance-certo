@@ -24,7 +24,7 @@ import br.com.hematsu.lance_certo.service.UserService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
@@ -43,14 +43,14 @@ public class UserController {
         this.tokenService = tokenService;
     }
 
-    @PostMapping("/users/register")
+    @PostMapping("/register")
     public ResponseEntity<Void> registerUser(@RequestBody @Valid UserRegistrationRequestDTO registrationDTO) {
 
         userService.registerUser(registrationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping("/users/login")
+    @PostMapping("/login")
     public ResponseEntity<UserTokenResponseDTO> loginUser(@RequestBody UserLoginRequestDTO loginDTO) {
 
         Authentication auth = userService.authenticate(loginDTO.login(), loginDTO.password());
@@ -63,7 +63,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userDTO);
     }
 
-    @GetMapping("/users")
+    @GetMapping
     public ResponseEntity<UserResponseDTO> getByUsernameOrEmail(
             @RequestParam(required = true) String login) {
 
@@ -71,7 +71,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userMapper.toUserResponseDTO(user));
     }
 
-    @PatchMapping("/users/update")
+    @PatchMapping("/update")
     public ResponseEntity<UserResponseDTO> updateUser(@RequestBody @Valid UserUpdateRequestDTO requestDTO) {
 
         Long id = authenticationService.getIdByAuthentication();

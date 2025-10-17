@@ -113,15 +113,19 @@ public class AuctionService {
     @Transactional
     @Scheduled(cron = "0 * * * * ?")
     public void processPendingAuctions() {
-
-        List<Auction> auctions = auctionRepository.findByStatusAndStartTimeBefore(AuctionStatus.PENDING,
-                LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        List<Auction> auctions = auctionRepository.findByStatusAndStartDateAndTimeBefore(AuctionStatus.PENDING,
+                now);
 
         if (auctions.isEmpty()) {
             return;
         }
 
-        auctions.forEach(auction -> auction.setStatus(AuctionStatus.ACTIVE));
+        auctions.forEach((auction) -> {
+            if (!auction.getStartDateAndTime().isAfter(now)) {
+                auction.setStatus(AuctionStatus.ACTIVE);
+            }
+        });
 
         auctionRepository.saveAll(auctions);
 
@@ -136,15 +140,18 @@ public class AuctionService {
     @Scheduled(cron = "0 * * * * ?")
     public void processEndingAuctions() {
 
-        List<Auction> auctions = auctionRepository.findByStatusAndEndTimeBefore(AuctionStatus.ACTIVE,
-                LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        List<Auction> auctions = auctionRepository.findByStatusAndEndDateAndTimeBefore(AuctionStatus.ACTIVE,
+                now);
 
         if (auctions.isEmpty()) {
             return;
         }
 
         auctions.forEach(auction -> {
-            auction.setStatus(AuctionStatus.CLOSED);
+            if (!auction.getEndDateAndTime().isAfter(now)) {
+                auction.setStatus(AuctionStatus.CLOSED);
+            }
 
             if (auction.getCurrentBid().compareTo(BigDecimal.ZERO) > 0
                     && !auction.getCurrentBidder().equals(auction.getSeller())) {

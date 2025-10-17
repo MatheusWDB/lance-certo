@@ -49,6 +49,7 @@ public class ProductService {
 
     public List<ProductResponseDTO> findProductsBySeller(Long sellerId) {
         List<Product> products = productRepository.findBySellerId(sellerId);
+
         return products.stream().map(productMapper::toProductResponseDTO).toList();
     }
 

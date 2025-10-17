@@ -63,7 +63,7 @@ public class SecurityConfig {
         private static final String[] PUBLIC_GET_MATCHERS = {
                         "/api/products",
                         "/api/products/seller",
-                        "/api/auction/{id}",
+                        "/api/auctions/{id}",
                         "/api/auctions",
                         "/api/bids/auctions/{auctionId}",
                         "/api/bids"

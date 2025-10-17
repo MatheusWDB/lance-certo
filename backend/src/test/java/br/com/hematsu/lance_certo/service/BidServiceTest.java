@@ -67,7 +67,7 @@ class BidServiceTest {
         existingAuction.setId(1L);
         existingAuction.setStatus(AuctionStatus.ACTIVE);
         existingAuction.setSeller(new User());
-        existingAuction.setEndTime(LocalDateTime.now().plusDays(1));
+        existingAuction.setEndDateAndTime(LocalDateTime.now().plusDays(1));
         existingAuction.setInitialPrice(BigDecimal.ZERO);
         existingAuction.setMinimunBidIncrement(BigDecimal.ZERO);
         existingAuction.setCurrentBid(BigDecimal.ZERO);        
@@ -194,7 +194,7 @@ class BidServiceTest {
         Auction irregularAuction = new Auction();
         irregularAuction.setId(10000L);
         irregularAuction.setStatus(AuctionStatus.ACTIVE);
-        irregularAuction.setEndTime(LocalDateTime.now().minusMinutes(1));
+        irregularAuction.setEndDateAndTime(LocalDateTime.now().minusMinutes(1));
 
         Long auctionId = irregularAuction.getId();
         BigDecimal amount = BigDecimal.ONE;
@@ -222,7 +222,7 @@ class BidServiceTest {
         Auction irregularAuction = new Auction();
         irregularAuction.setId(10000L);
         irregularAuction.setStatus(AuctionStatus.ACTIVE);
-        irregularAuction.setEndTime(LocalDateTime.now().plusDays(1));
+        irregularAuction.setEndDateAndTime(LocalDateTime.now().plusDays(1));
         irregularAuction.setSeller(userBidder);
 
         Long auctionId = irregularAuction.getId();
@@ -251,7 +251,7 @@ class BidServiceTest {
         Auction irregularAuction = new Auction();
         irregularAuction.setId(10000L);
         irregularAuction.setStatus(AuctionStatus.ACTIVE);
-        irregularAuction.setEndTime(LocalDateTime.now().plusDays(1));
+        irregularAuction.setEndDateAndTime(LocalDateTime.now().plusDays(1));
         irregularAuction.setSeller(new User());
         irregularAuction.setMinimunBidIncrement(BigDecimal.ONE);
         irregularAuction.setInitialPrice(BigDecimal.ONE);
@@ -282,7 +282,7 @@ class BidServiceTest {
         Auction irregularAuction = new Auction();
         irregularAuction.setId(10000L);
         irregularAuction.setStatus(AuctionStatus.ACTIVE);
-        irregularAuction.setEndTime(LocalDateTime.now().plusDays(1));
+        irregularAuction.setEndDateAndTime(LocalDateTime.now().plusDays(1));
         irregularAuction.setSeller(new User());
         irregularAuction.setMinimunBidIncrement(BigDecimal.ONE);        
         irregularAuction.setInitialPrice(BigDecimal.ONE);

@@ -93,8 +93,8 @@ class AuctionServiceTest {
         existingAuction.setProduct(product);
         existingAuction.setSeller(sellerUser);
         existingAuction.setStatus(AuctionStatus.PENDING);
-        existingAuction.setStartTime(LocalDateTime.now().plusHours(1));
-        existingAuction.setEndTime(LocalDateTime.now().plusHours(2));
+        existingAuction.setStartDateAndTime(LocalDateTime.now().plusHours(1));
+        existingAuction.setEndDateAndTime(LocalDateTime.now().plusHours(2));
         existingAuction.setInitialPrice(BigDecimal.valueOf(100.0));
         existingAuction.setMinimunBidIncrement(BigDecimal.valueOf(10.0));
         existingAuction.setCurrentBid(BigDecimal.ZERO);
@@ -234,9 +234,9 @@ class AuctionServiceTest {
 
     // --- Testes para saveAuction ---
 
-     @Test
+    @Test
     @DisplayName("Deve salvar o leilão")
-    void save_ShouldSaveAuction(){
+    void save_ShouldSaveAuction() {
 
         when(auctionRepository.save(existingAuction)).thenReturn(existingAuction);
 
@@ -244,7 +244,7 @@ class AuctionServiceTest {
 
         verify(auctionRepository, times(1)).save(existingAuction);
     }
-    
+
     // --- Testes para searchAndFilterAuctions (Paginação e Filtros) ---
 
     // Pronto
@@ -296,22 +296,23 @@ class AuctionServiceTest {
         Auction pendingAuction = new Auction();
         pendingAuction.setId(300L);
         pendingAuction.setStatus(AuctionStatus.PENDING);
-        pendingAuction.setStartTime(LocalDateTime.now().minusMinutes(1));
+        pendingAuction.setStartDateAndTime(LocalDateTime.now().minusMinutes(1));
 
         List<Auction> auctionsToActivate = List.of(pendingAuction);
         AuctionDetailsResponseDTO activatedAuctionDTO = new AuctionDetailsResponseDTO(
-                pendingAuction.getId(), null, pendingAuction.getStartTime(), null, null, null, null, null,
+                pendingAuction.getId(), null, pendingAuction.getStartDateAndTime(), null, null, null, null, null,
                 AuctionStatus.ACTIVE, null,
                 null, null);
 
-        when(auctionRepository.findByStatusAndStartTimeBefore(eq(AuctionStatus.PENDING), any(LocalDateTime.class)))
+        when(auctionRepository.findByStatusAndStartDateAndTimeBefore(eq(AuctionStatus.PENDING),
+                any(LocalDateTime.class)))
                 .thenReturn(auctionsToActivate);
         when(auctionRepository.saveAll(auctionsToActivate)).thenReturn(auctionsToActivate);
         when(auctionMapper.toAuctionDetailsResponseDTO(any(Auction.class))).thenReturn(activatedAuctionDTO);
 
         auctionService.processPendingAuctions();
 
-        verify(auctionRepository, times(1)).findByStatusAndStartTimeBefore(eq(AuctionStatus.PENDING),
+        verify(auctionRepository, times(1)).findByStatusAndStartDateAndTimeBefore(eq(AuctionStatus.PENDING),
                 any(LocalDateTime.class));
         verify(auctionRepository, times(1)).saveAll(auctionsToActivate);
         verify(auctionMapper, times(1)).toAuctionDetailsResponseDTO(pendingAuction);
@@ -329,12 +330,13 @@ class AuctionServiceTest {
 
         List<Auction> auctionsEmpty = new ArrayList<Auction>();
 
-        when(auctionRepository.findByStatusAndStartTimeBefore(eq(AuctionStatus.PENDING), any(LocalDateTime.class)))
+        when(auctionRepository.findByStatusAndStartDateAndTimeBefore(eq(AuctionStatus.PENDING),
+                any(LocalDateTime.class)))
                 .thenReturn(auctionsEmpty);
 
         auctionService.processPendingAuctions();
 
-        verify(auctionRepository, times(1)).findByStatusAndStartTimeBefore(eq(AuctionStatus.PENDING),
+        verify(auctionRepository, times(1)).findByStatusAndStartDateAndTimeBefore(eq(AuctionStatus.PENDING),
                 any(LocalDateTime.class));
 
         verify(auctionRepository, never()).saveAll(auctionsEmpty);
@@ -352,24 +354,24 @@ class AuctionServiceTest {
         Auction activeAuction = new Auction();
         activeAuction.setId(300L);
         activeAuction.setStatus(AuctionStatus.ACTIVE);
-        activeAuction.setEndTime(LocalDateTime.now().minusMinutes(1));
+        activeAuction.setEndDateAndTime(LocalDateTime.now().minusMinutes(1));
         activeAuction.setCurrentBid(BigDecimal.TEN);
         activeAuction.setCurrentBidder(new User());
 
         List<Auction> auctionsToClose = List.of(activeAuction);
         AuctionDetailsResponseDTO closedAuctionDTO = new AuctionDetailsResponseDTO(
-                activeAuction.getId(), null, activeAuction.getStartTime(), null, null, null, null, null,
+                activeAuction.getId(), null, activeAuction.getStartDateAndTime(), null, null, null, null, null,
                 AuctionStatus.ACTIVE, null,
                 null, null);
 
-        when(auctionRepository.findByStatusAndEndTimeBefore(eq(AuctionStatus.ACTIVE), any(LocalDateTime.class)))
+        when(auctionRepository.findByStatusAndEndDateAndTimeBefore(eq(AuctionStatus.ACTIVE), any(LocalDateTime.class)))
                 .thenReturn(auctionsToClose);
         when(auctionRepository.saveAll(auctionsToClose)).thenReturn(auctionsToClose);
         when(auctionMapper.toAuctionDetailsResponseDTO(any(Auction.class))).thenReturn(closedAuctionDTO);
 
         auctionService.processEndingAuctions();
 
-        verify(auctionRepository, times(1)).findByStatusAndEndTimeBefore(eq(AuctionStatus.ACTIVE),
+        verify(auctionRepository, times(1)).findByStatusAndEndDateAndTimeBefore(eq(AuctionStatus.ACTIVE),
                 any(LocalDateTime.class));
         verify(auctionRepository, times(1)).saveAll(auctionsToClose);
         verify(auctionMapper, times(1)).toAuctionDetailsResponseDTO(activeAuction);
@@ -387,12 +389,12 @@ class AuctionServiceTest {
 
         List<Auction> auctionsEmpty = new ArrayList<Auction>();
 
-        when(auctionRepository.findByStatusAndEndTimeBefore(eq(AuctionStatus.ACTIVE), any(LocalDateTime.class)))
+        when(auctionRepository.findByStatusAndEndDateAndTimeBefore(eq(AuctionStatus.ACTIVE), any(LocalDateTime.class)))
                 .thenReturn(auctionsEmpty);
 
         auctionService.processEndingAuctions();
 
-        verify(auctionRepository, times(1)).findByStatusAndEndTimeBefore(eq(AuctionStatus.ACTIVE),
+        verify(auctionRepository, times(1)).findByStatusAndEndDateAndTimeBefore(eq(AuctionStatus.ACTIVE),
                 any(LocalDateTime.class));
 
         verify(auctionRepository, never()).saveAll(auctionsEmpty);

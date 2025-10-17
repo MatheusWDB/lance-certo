@@ -29,8 +29,8 @@ CREATE TABLE
         id BIGSERIAL PRIMARY KEY,
         product_id BIGINT NOT NULL,
         seller_id BIGINT NOT NULL,
-        start_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-        end_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+        start_date_and_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+        end_date_and_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
         initial_price DECIMAL(19, 2) NOT NULL,
         minimun_bid_increment DECIMAL(19, 2) NOT NULL,
         current_bid DECIMAL(19, 2) NOT NULL,
@@ -70,9 +70,9 @@ CREATE INDEX idx_auctions_seller_id ON tb_auctions (seller_id);
 
 CREATE INDEX idx_auctions_status ON tb_auctions (status);
 
-CREATE INDEX idx_auctions_start_time ON tb_auctions (start_time);
+CREATE INDEX idx_auctions_start_date_and_time ON tb_auctions (start_date_and_time);
 
-CREATE INDEX idx_auctions_end_time ON tb_auctions (end_time);
+CREATE INDEX idx_auctions_end_date_and_time ON tb_auctions (end_date_and_time);
 
 CREATE INDEX idx_bids_auction_id ON tb_bids (auction_id);
 

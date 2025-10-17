@@ -140,7 +140,7 @@ public class TestConfig implements CommandLineRunner {
                                         null,
                                         categories[i]);
                         Product product = productMapper.toProduct(productDto);
-                        product.setSeller(userSeller);
+                        product.setSeller(userAdmin);
                         createdProducts.add(product);
                 }
                 createdProducts = productRepository.saveAll(createdProducts);
@@ -148,10 +148,10 @@ public class TestConfig implements CommandLineRunner {
                 // Criar leilões
                 List<Auction> createdAuctions = new ArrayList<>();
 
-                // LocalDateTime fixedStartTime = LocalDateTime.now().plusSeconds(1); // Manter o startTime fixo ou variar também
+                // LocalDateTime fixedstartDateAndTime = LocalDateTime.now().plusSeconds(1); // Manter o startDateAndTime fixo ou variar também
                 LocalDateTime baseTime = LocalDateTime.now(); // Tempo base para cálculo
-                // Podemos variar o startTime também, ou mantê-lo próximo do now()
-                LocalDateTime currentStartTime = baseTime.minusMinutes(1); // Exemplo: 1 minuto no passado para ele iniciar logo
+                // Podemos variar o startDateAndTime também, ou mantê-lo próximo do now()
+                LocalDateTime currentstartDateAndTime = baseTime.minusMinutes(1); // Exemplo: 1 minuto no passado para ele iniciar logo
 
                 BigDecimal fixedCurrentBid = BigDecimal.ZERO;
                 User fixedCurrentBidder = null;
@@ -168,31 +168,31 @@ public class TestConfig implements CommandLineRunner {
                                         .valueOf(ThreadLocalRandom.current().nextDouble(5.0, 200.0))
                                         .setScale(2, RoundingMode.HALF_UP);
 
-                        // *** NOVO: Calcular endTime aleatório entre 2 e 15 minutos ***
+                        // *** NOVO: Calcular endDateAndTime aleatório entre 2 e 15 minutos ***
                         // Gera um número aleatório de minutos entre 2 e 15 (inclusive)
-                        int randomMinutesToAdd = ThreadLocalRandom.current().nextInt(2, 31); // maxExclusive, então 16 para incluir 15
-                        LocalDateTime dynamicEndTime = baseTime.plusMinutes(randomMinutesToAdd);
+                        int randomMinutesToAdd = ThreadLocalRandom.current().nextInt(2, 61); // maxExclusive, então 16 para incluir 15
+                        LocalDateTime dynamicendDateAndTime = baseTime.plusMinutes(randomMinutesToAdd);
 
-                        // Ajuste startTime para ser antes do dynamicEndTime se baseTime é o mesmo
-                        // Se currentStartTime é fixo no passado, OK.
-                        // Se você quiser que o leilão comece AGORA, use LocalDateTime.now() para startTime
-                        LocalDateTime auctionStartTime = currentStartTime; // Ou LocalDateTime.now();
+                        // Ajuste startDateAndTime para ser antes do dynamicendDateAndTime se baseTime é o mesmo
+                        // Se currentstartDateAndTime é fixo no passado, OK.
+                        // Se você quiser que o leilão comece AGORA, use LocalDateTime.now() para startDateAndTime
+                        LocalDateTime auctionstartDateAndTime = currentstartDateAndTime; // Ou LocalDateTime.now();
 
-                        // Certifique-se que endTime seja sempre depois de startTime para o DTO
-                        if (auctionStartTime.isAfter(dynamicEndTime)) {
-                           dynamicEndTime = auctionStartTime.plusMinutes(randomMinutesToAdd); // Ajusta se startTime for depois
+                        // Certifique-se que endDateAndTime seja sempre depois de startDateAndTime para o DTO
+                        if (auctionstartDateAndTime.isAfter(dynamicendDateAndTime)) {
+                           dynamicendDateAndTime = auctionstartDateAndTime.plusMinutes(randomMinutesToAdd); // Ajusta se startDateAndTime for depois
                         }
 
 
                         AuctionCreateRequestDTO auctionDto = new AuctionCreateRequestDTO(
                                         associatedProduct.getId(),
-                                        auctionStartTime, // Usando o startTime calculado
-                                        dynamicEndTime, // *** Usando o endTime dinâmico ***
+                                        auctionstartDateAndTime, // Usando o startDateAndTime calculado
+                                        dynamicendDateAndTime, // *** Usando o endDateAndTime dinâmico ***
                                         initialPrice,
                                         minBidIncrement);
 
                         Auction auction = auctionMapper.toAuction(auctionDto); // mapper.toAuction()
-                        auction.setSeller(userSeller);
+                        auction.setSeller(userAdmin);
                         auction.setProduct(associatedProduct);
                         auction.setStatus(fixedStatus);
                         auction.setCurrentBid(fixedCurrentBid);
@@ -219,12 +219,12 @@ public class TestConfig implements CommandLineRunner {
 
                 // 2. Lance do UserAdmin (lance maior)
                 BigDecimal bidAmountAdmin = bidAmountBuyer.add(targetAuction.getMinimunBidIncrement()).add(BigDecimal.valueOf(10.0)); // Mais que o anterior + incremento, mais 10
-                Bid bidAdmin = new Bid(targetAuction, userAdmin, bidAmountAdmin);
+                Bid bidAdmin = new Bid(targetAuction, userSeller, bidAmountAdmin);
                 bidRepository.save(bidAdmin);
 
                 // Atualizar o leilão com o segundo lance
                 targetAuction.setCurrentBid(bidAmountAdmin);
-                targetAuction.setCurrentBidder(userAdmin);
+                targetAuction.setCurrentBidder(userSeller);
                 auctionRepository.save(targetAuction); // Salva a atualização do leilão
         }
 

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -22,10 +23,13 @@ public interface AuctionRepository extends JpaRepository<Auction, Long>, JpaSpec
 
     List<Auction> findByStatus(AuctionStatus status);
 
-    List<Auction> findByStatusAndEndTimeBefore(AuctionStatus status, LocalDateTime endTime);
+    @Query("SELECT a FROM tb_auctions a WHERE a.status = :status AND a.endDateAndTime <= :endDateAndTime")
+    List<Auction> findByStatusAndEndDateAndTimeBefore(AuctionStatus status, LocalDateTime endDateAndTime);
 
-    List<Auction> findByStatusAndStartTimeBefore(AuctionStatus status, LocalDateTime startTime);
+    @Query("SELECT a FROM tb_auctions a WHERE a.status = :status AND a.startDateAndTime <= :startDateAndTime")
+    List<Auction> findByStatusAndStartDateAndTimeBefore(AuctionStatus status, LocalDateTime startDateAndTime);
 
     @NonNull
+    @Override
     Page<Auction> findAll(@Nullable Specification<Auction> spec, @NonNull Pageable pageable);
 }

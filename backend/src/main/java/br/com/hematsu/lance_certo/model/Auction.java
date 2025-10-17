@@ -43,10 +43,10 @@ public class Auction implements Serializable {
   private User seller;
 
   @Column(nullable = false)
-  private LocalDateTime startTime;
+  private LocalDateTime startDateAndTime;
 
   @Column(nullable = false)
-  private LocalDateTime endTime;
+  private LocalDateTime endDateAndTime;
 
   @Column(nullable = false, precision = 19, scale = 2)
   private BigDecimal initialPrice;

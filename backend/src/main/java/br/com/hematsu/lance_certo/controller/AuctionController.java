@@ -22,7 +22,7 @@ import br.com.hematsu.lance_certo.service.AuthenticationService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auctions")
 public class AuctionController {
 
     private final AuctionService auctionService;
@@ -36,7 +36,7 @@ public class AuctionController {
         this.authenticationService = authenticationService;
     }
 
-    @PostMapping("/auctions/create/sellers")
+    @PostMapping("/create/sellers")
     public ResponseEntity<Void> createAuction(@RequestBody @Valid AuctionCreateRequestDTO auctionDTO) {
 
         Long sellerId = authenticationService.getIdByAuthentication();
@@ -45,14 +45,17 @@ public class AuctionController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/auction/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<AuctionDetailsResponseDTO> getAuctionById(@PathVariable Long id) {
+
+        auctionService.processEndingAuctions();
+        auctionService.processPendingAuctions();
 
         Auction auction = auctionService.findById(id);
         return ResponseEntity.status(HttpStatus.OK).body(auctionMapper.toAuctionDetailsResponseDTO(auction));
     }
 
-    @GetMapping("/auctions/seller")
+    @GetMapping("/seller")
     public ResponseEntity<Page<AuctionDetailsResponseDTO>> getMyAuctions() {
 
         auctionService.processEndingAuctions();
@@ -71,7 +74,7 @@ public class AuctionController {
         return ResponseEntity.status(HttpStatus.OK).body(auctionPage);
     }
 
-    @GetMapping("/auctions")
+    @GetMapping
     public ResponseEntity<Page<AuctionDetailsResponseDTO>> searchAndFilterAuctions(
             AuctionFilterParamsDTO auctionFilterParamsDTO,
             Pageable pageable) {
@@ -86,7 +89,7 @@ public class AuctionController {
         return ResponseEntity.status(HttpStatus.OK).body(auctionPage);
     }
 
-    @PatchMapping("/auctions/{id}/cancel")
+    @PatchMapping("/{id}/cancel")
     public ResponseEntity<Void> cancelAuction(@PathVariable Long id) {
 
         Long sellerId = authenticationService.getIdByAuthentication();

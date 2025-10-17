@@ -25,7 +25,7 @@ import br.com.hematsu.lance_certo.service.ProductService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/products")
 public class ProductController {
 
     private final ProductService productService;
@@ -39,7 +39,7 @@ public class ProductController {
         this.authenticationService = authenticationService;
     }
 
-    @PostMapping("/products/create/sellers")
+    @PostMapping("/create/sellers")
     public ResponseEntity<Void> createProducts(@RequestBody @Valid ProductRequestDTO body) {
 
         Long sellerId = authenticationService.getIdByAuthentication();
@@ -48,7 +48,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/products")
+    @GetMapping
     public ResponseEntity<Page<ProductResponseDTO>> getProductsByNameOrCategory(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String category,
@@ -62,7 +62,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.OK).body(products);
     }
 
-    @GetMapping("/products/seller")
+    @GetMapping("/seller")
     public ResponseEntity<List<ProductResponseDTO>> getProductsBySeller(
             @RequestParam(required = false) String param) {
 
@@ -80,7 +80,7 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.OK).body(products);
     }
 
-    @PatchMapping("/products/{id}/update")
+    @PatchMapping("/{id}/update")
     public ResponseEntity<ProductResponseDTO> updateProduct(
             @PathVariable Long id,
             @RequestBody ProductRequestDTO body) {
