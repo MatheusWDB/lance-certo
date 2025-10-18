@@ -1,3 +1,4 @@
+import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
 import 'package:lance_certo/models/auction.dart';
 import 'package:lance_certo/models/auction_status.dart';
@@ -17,49 +18,62 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with TickerProviderStateMixin {
   late Future<PaginatedResponse<Bid>> _bidsFuture;
   late Future<PaginatedResponse<Auction>> _auctionsFuture;
+  late final TabController _tabController;
 
-  String _activeMenu = 'myBids';
+  int _activeMenu = 0;
 
   void _fetchMyBidsWithAuctions() async {
-    _bidsFuture = BidService.fetchBidsByBidder();
+    try {
+      _bidsFuture = BidService.fetchBidsByBidder();
 
-    if (User.currentUser!.role != UserRole.BUYER) {
-      _auctionsFuture = AuctionService.fetchAuctionsBySeller();
+      if (User.currentUser!.role != UserRole.BUYER) {
+        _auctionsFuture = AuctionService.fetchAuctionsBySeller();
+      }
+    } catch (e) {
+      debugPrint('Erro ao buscar lances: $e');
+      if (mounted) {
+        final String errorMessage = e.toString();
+        final String cleanMessage = errorMessage.replaceFirst(
+          'Exception: ',
+          '',
+        );
+
+        AlertInfo.show(
+          context: context,
+          text: cleanMessage,
+          typeInfo: TypeInfo.error,
+        );
+      }
     }
   }
 
   String _getMenuTitle() {
     switch (_activeMenu) {
-      case 'myBids':
+      case 0:
         return 'Meus Lances Ativos';
-      case 'myAuctions':
+      case 1:
         return 'Meus Leilões Criados';
-      case 'closedAuctions':
+      case 2:
         return 'Leilões Encerrados';
       default:
         return '';
     }
   }
 
-  void _changeMenu(String menu) {
+  void _changeMenu(int menu) {
     if (menu == _activeMenu) return;
 
-    if (User.currentUser!.role == UserRole.BUYER && menu == 'myAuctions') {
-      return;
-    }
+    if (User.currentUser!.role == UserRole.BUYER && menu == 1) return;
 
     _fetchMyBidsWithAuctions();
 
     setState(() {
       _activeMenu = menu;
     });
-  }
-
-  Color _menuColor(String menu) {
-    return _activeMenu == menu ? const Color(0xFF2563EB) : const Color(0xFF4B5563);
   }
 
   Widget _emptyContenMmessage(String message) {
@@ -69,12 +83,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _fetchMyBidsWithAuctions();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   @override
@@ -82,7 +92,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       body: SafeArea(
         child: Container(
-          decoration: const BoxDecoration(color: Color.fromARGB(255, 243, 244, 246)),
+          decoration: const BoxDecoration(
+            color: Color.fromARGB(255, 243, 244, 246),
+          ),
           child: Center(
             child: Container(
               width: MediaQuery.of(context).size.width * 0.87,
@@ -102,40 +114,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'Minha Área',
                     style: TextStyle(fontSize: 37, fontWeight: FontWeight.bold),
                   ),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () => _changeMenu('myBids'),
-                        style: ButtonStyle(
-                          foregroundColor: WidgetStateProperty.all(
-                            _menuColor('myBids'),
-                          ),
-                        ),
-                        child: const Text('Meus Lances', style: TextStyle(fontSize: 16.0),),
+                  TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    tabs: [
+                      const Text(
+                        'Meus Lances',
+                        style: TextStyle(fontSize: 16.0),
                       ),
-                      TextButton(
-                        onPressed: () => _changeMenu('myAuctions'),
-                        style: ButtonStyle(
-                          foregroundColor: WidgetStateProperty.all(
-                            User.currentUser!.role == UserRole.BUYER
-                                ? Colors.grey
-                                : _menuColor('myAuctions'),
-                          ),
+                      Text(
+                        'Meus Leilões (Vendedor)',
+                        style: TextStyle(
+                          fontSize: 16.0,
+                          color: User.currentUser!.role == UserRole.BUYER
+                              ? Colors.grey.shade400
+                              : Colors.black,
                         ),
-                        child: const Text('Meus Leilões (Vendedor)', style: TextStyle(fontSize: 16.0),),
                       ),
-                      TextButton(
-                        onPressed: () => _changeMenu('closedAuctions'),
-                        style: ButtonStyle(
-                          foregroundColor: WidgetStateProperty.all(
-                            _menuColor('closedAuctions'),
-                          ),
-                        ),
-                        child: const Text('Leilões Encerrados', style: TextStyle(fontSize: 16.0),),
+                      const Text(
+                        'Leilões Encerrados',
+                        style: TextStyle(fontSize: 16.0),
                       ),
                     ],
+                    onTap: (value) {
+                      if (value == 1 &&
+                          User.currentUser!.role == UserRole.BUYER) {
+                        setState(() {
+                          _tabController.index = _activeMenu;
+                        });
+                        AlertInfo.show(
+                          context: context,
+                          text:
+                              'Somente vendedores podem acessar a aba "Meus Leilões".',
+                          typeInfo: TypeInfo.warning,
+                        );
+
+                        return;
+                      }
+                      _changeMenu(value);
+                    },
                   ),
-                  const Divider(color: Colors.grey),
+                  //const Divider(color: Colors.grey),
                   Expanded(
                     child: Column(
                       spacing: 16.0,
@@ -151,7 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         Flexible(
                           child: FutureBuilder<dynamic>(
-                            future: _activeMenu == 'myAuctions'
+                            future: _activeMenu == 1
                                 ? _auctionsFuture
                                 : _bidsFuture,
                             builder: (context, snapshot) {
@@ -167,11 +187,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 );
                               } else if (!snapshot.hasData ||
                                   snapshot.data!.content.isEmpty) {
-                                return _activeMenu == 'myBids'
+                                return _activeMenu == 0
                                     ? _emptyContenMmessage('lance')
                                     : _emptyContenMmessage('leilão');
                               } else {
-                                if (_activeMenu == 'myBids' &&
+                                if (_activeMenu == 0 &&
                                     !snapshot.data!.content
                                         .whereType<Bid>()
                                         .any(
@@ -182,7 +202,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   return _emptyContenMmessage('lance ativo');
                                 }
 
-                                if (_activeMenu == 'closedAuctions' &&
+                                if (_activeMenu == 2 &&
                                     !snapshot.data!.content
                                         .whereType<Bid>()
                                         .any(
@@ -198,7 +218,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 final paginatedFuture = snapshot.data;
                                 late final List<Object> item;
 
-                                if (_activeMenu != 'myAuctions') {
+                                if (_activeMenu != 1) {
                                   final List<Bid> allBids = paginatedFuture!
                                       .content
                                       .whereType<Bid>()
@@ -257,5 +277,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 }

@@ -1,3 +1,4 @@
+import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lance_certo/models/auction.dart';
@@ -9,16 +10,16 @@ import 'package:lance_certo/widgets/auction_details_widget.dart';
 import 'package:lance_certo/widgets/auction_timer_widget.dart';
 
 class DashboardListWidget extends StatefulWidget {
-  final String activeMenu;
-  final Object item;
-  final Future<void> Function() updateList;
-
   const DashboardListWidget({
     required this.activeMenu,
     required this.item,
     required this.updateList,
     super.key,
   });
+  
+  final int activeMenu;
+  final Object item;
+  final Future<void> Function() updateList;
 
   @override
   State<DashboardListWidget> createState() => _DashboardListWidgetState();
@@ -28,7 +29,7 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
   late dynamic item;
 
   Color _colorCard() {
-    if (widget.activeMenu == 'myAuctions') {
+    if (widget.activeMenu == 1) {
       if ((item as Auction).status == AuctionStatus.ACTIVE) {
         return const Color.fromARGB(255, 240, 253, 244);
       } else if ((item as Auction).status == AuctionStatus.PENDING) {
@@ -38,7 +39,7 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
       }
     }
 
-    if (widget.activeMenu == 'closedAuctions') {
+    if (widget.activeMenu == 2) {
       return const Color.fromARGB(255, 243, 244, 246);
     }
 
@@ -50,7 +51,7 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
     return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(value);
   }
 
-  Future<Auction> _fetchAuctionById(int auctionId) async {
+  Future<Auction> _fetchAuctionById(int auctionId) {
     return AuctionService.fetchAuctionById(auctionId);
   }
 
@@ -66,12 +67,12 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
     late Color colorText5;
 
     switch (widget.activeMenu) {
-      case 'myBids':
+      case 0:
         if (item.auction!.status == AuctionStatus.ACTIVE) {
           colorText3 = const Color.fromARGB(255, 29, 78, 216);
           colorText5 = const Color.fromARGB(255, 99, 159, 96);
           timer = AuctionTimerWidget(
-            endTime: item.auction.endTime,
+            endTime: item.auction.endDateAndTime,
             updateList: () => widget.updateList(),
           );
           text1 = item.auction!.product!.name;
@@ -82,7 +83,7 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
         }
 
         break;
-      case 'myAuctions':
+      case 1:
         colorText3 = const Color.fromARGB(255, 21, 128, 61);
 
         if ((item as Auction).status == AuctionStatus.ACTIVE) {
@@ -103,7 +104,7 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
         }
 
         break;
-      case 'closedAuctions':
+      case 2:
         if (item.auction!.status! == AuctionStatus.CLOSED ||
             item.auction!.status! == AuctionStatus.CANCELLED) {
           text1 = item.auction!.product!.name;
@@ -143,7 +144,10 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
             Text(
               text1,
               textAlign: TextAlign.start,
-              style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             RichText(
               textAlign: TextAlign.start,
@@ -163,7 +167,7 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
           ],
         ),
       ),
-      if (widget.activeMenu == 'myBids')
+      if (widget.activeMenu == 0)
         Expanded(child: Row(children: [Text(text4), timer])),
       if (widget.activeMenu != 'myBids')
         Expanded(
@@ -187,15 +191,35 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.0),
             ),
-            textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           onPressed: () async {
-            Auction auction;
+            late Auction auction;
 
-            if (widget.activeMenu == 'myAuctions') {
+            if (widget.activeMenu == 1) {
               auction = item;
             } else {
-              auction = await _fetchAuctionById((item as Bid).auction!.id!);
+              try {
+                auction = await _fetchAuctionById((item as Bid).auction!.id!);
+              } catch (e) {
+                debugPrint('Erro ao buscar leilão: $e');
+                if (mounted) {
+                  final String errorMessage = e.toString();
+                  final String cleanMessage = errorMessage.replaceFirst(
+                    'Exception: ',
+                    '',
+                  );
+
+                  AlertInfo.show(
+                    context: context,
+                    text: cleanMessage,
+                    typeInfo: TypeInfo.error,
+                  );
+                }
+              }
             }
 
             if (!mounted) return;
@@ -222,7 +246,7 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
   void initState() {
     super.initState();
 
-    if (widget.activeMenu == 'myAuctions') {
+    if (widget.activeMenu == 1) {
       item = widget.item as Auction;
       return;
     }
@@ -231,17 +255,12 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if ((widget.activeMenu == 'myBids' &&
+    if ((widget.activeMenu == 0 &&
             item.auction!.status != AuctionStatus.ACTIVE) ||
-        (widget.activeMenu == 'myAuctions' &&
+        (widget.activeMenu == 1 &&
             item.seller.id != User.currentUser!.id) ||
-        (widget.activeMenu == 'closedAuctions' &&
+        (widget.activeMenu == 2 &&
             (item.auction!.status != AuctionStatus.CLOSED &&
                 item.auction!.status != AuctionStatus.CANCELLED))) {
       return const SizedBox.shrink();
@@ -256,5 +275,10 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }
