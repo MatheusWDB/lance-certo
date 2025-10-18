@@ -5,8 +5,8 @@ import 'package:lance_certo/models/user.dart';
 
 class Auction {
   Auction({
-    required this.startTime,
-    required this.endTime,
+    required this.startDateAndTime,
+    required this.endDateAndTime,
     required this.initialPrice,
     required this.minimunBidIncrement,
     this.product,
@@ -23,8 +23,8 @@ class Auction {
   final int? id;
   final Product? product;
   final User? seller;
-  final DateTime startTime;
-  final DateTime endTime;
+  final DateTime startDateAndTime;
+  final DateTime endDateAndTime;
   final double initialPrice;
   final double minimunBidIncrement;
   double? currentBid;
@@ -39,8 +39,8 @@ class Auction {
       id: json['id'] as int?,
       product: Product.fromJson(json['product'] as Map<String, dynamic>),
       seller: User.fromJson(json['product']['seller'] as Map<String, dynamic>),
-      startTime: DateTime.parse(json['startTime'] as String),
-      endTime: DateTime.parse(json['endTime'] as String),
+      startDateAndTime: DateTime.parse(json['startDateAndTime'] as String),
+      endDateAndTime: DateTime.parse(json['endDateAndTime'] as String),
       initialPrice: (json['initialPrice'] as num).toDouble(),
       minimunBidIncrement: (json['minimunBidIncrement'] as num).toDouble(),
       currentBid: (json['currentBid'] as num?)?.toDouble(),
@@ -62,8 +62,8 @@ class Auction {
 
   Map<String, dynamic> toJson() => {
     'productId': product!.id,
-    'startTime': startTime.toIso8601String(),
-    'endTime': endTime.toIso8601String(),
+    'startDateAndTime': startDateAndTime.toIso8601String(),
+    'endDateAndTime': endDateAndTime.toIso8601String(),
     'initialPrice': initialPrice,
     'minimunBidIncrement': minimunBidIncrement,
   };
@@ -74,8 +74,8 @@ class Auction {
         '  id: $id,\n'
         '  product: ${product?.toString() ?? 'N/A'},\n' // Acessa o nome do produto (se não for null)
         '  seller: ${seller?.username ?? 'N/A'},\n' // Acessa o username do vendedor
-        '  startTime: ${DateFormat('dd/MM/yyyy HH:mm').format(startTime)},\n'
-        '  endTime: ${DateFormat('dd/MM/yyyy HH:mm').format(endTime)},\n'
+        '  startDateAndTime: ${DateFormat('dd/MM/yyyy HH:mm').format(startDateAndTime)},\n'
+        '  endDateAndTime: ${DateFormat('dd/MM/yyyy HH:mm').format(endDateAndTime)},\n'
         '  initialPrice: $initialPrice,\n'
         '  minimunBidIncrement: $minimunBidIncrement,\n'
         '  currentBid: ${currentBid ?? 'N/A'},\n' // Se currentBid for null, mostra 'N/A'

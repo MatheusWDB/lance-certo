@@ -25,7 +25,7 @@ linter:
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
     prefer_single_quotes: true
     always_declare_return_types: true
-    always_put_required_named_parameters_first: true
+    #always_put_required_named_parameters_first: true
     avoid_print: true
     avoid_unnecessary_containers: true
     use_key_in_widget_constructors: true
