@@ -1,3 +1,4 @@
+import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
 import 'package:lance_certo/screens/home_screen.dart';
 import 'package:lance_certo/screens/registration_screen.dart';
@@ -14,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   Map<String, TextEditingController> controller = {
-    'username': TextEditingController(text: 'buyer@gmail.com'),
+    'username': TextEditingController(text: 'seller@gmail.com'),
     'password': TextEditingController(text: '12345678'),
   };
   Map<String, String?> error = {'username': null, 'password': null};
@@ -26,17 +27,22 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
+    bool hasErrors = false;
+
     final attributes = ['username', 'password'];
 
     for (var attribute in attributes) {
       if (controller[attribute]!.text.isEmpty) {
-        setState(() {
-          error[attribute] = 'Campo requerido';
-
-          _isLoading = false;
-        });
-        return;
+        error[attribute] = 'Campo obrigatório.';
+        hasErrors = true;
       }
+    }
+
+    if (hasErrors) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
     }
 
     /** 
@@ -97,12 +103,10 @@ class _LoginScreenState extends State<LoginScreen> {
           '',
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(cleanMessage, textAlign: TextAlign.center),
-            duration: const Duration(seconds: 3),
-            backgroundColor: Colors.red,
-          ),
+        AlertInfo.show(
+          context: context,
+          text: cleanMessage,
+          typeInfo: TypeInfo.error,
         );
       }
     }
@@ -123,12 +127,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  void dispose() {
-    controller.forEach((key, value) => value.dispose());
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -142,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.376,
                   ),
-                  height: MediaQuery.of(context).size.height * 0.51,
+                  height: MediaQuery.of(context).size.height * 0.523,
                   padding: const EdgeInsets.all(32.0),
                   margin: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
@@ -283,5 +281,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    controller.forEach((key, value) => value.dispose());
+    super.dispose();
   }
 }

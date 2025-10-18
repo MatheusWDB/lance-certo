@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:lance_certo/models/user.dart';
 import 'package:http/http.dart' as http;
+import 'package:lance_certo/models/user.dart';
 
 class UserService {
   static const String baseUrl = 'http://127.0.0.1:8080/api/users';
@@ -15,7 +15,7 @@ class UserService {
 
     if (response.statusCode != 201) {
       final data = jsonDecode(response.body);
-      throw Exception('Erro ao criar usuário: ${data['message']}');
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
   }
 
@@ -28,14 +28,15 @@ class UserService {
     );
 
     final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> userMap = data['userDTO'];
-      final loggedUser = User.fromJson(userMap);
-      loggedUser.token = data['token'];
-      User.currentUser = loggedUser;
-    } else {
-      throw Exception('Erro ao buscar usuário: ${data['message']}');
+
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
+
+    final Map<String, dynamic> userMap = data['userDTO'];
+    final loggedUser = User.fromJson(userMap);
+    loggedUser.token = data['token'];
+    User.currentUser = loggedUser;
   }
 
   static Future<void> updateUser(
@@ -54,12 +55,13 @@ class UserService {
       body: jsonEncode(user.toJson(null, currentPassword, newPassword)),
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final loggedUser = User.fromJson(data);
-      User.currentUser = loggedUser;
-    } else {
-      throw Exception('Erro ao buscar usuário: ${response.statusCode}');
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
+
+    final loggedUser = User.fromJson(data);
+    User.currentUser = loggedUser;
   }
 }

@@ -20,22 +20,6 @@ class _AuctionTimerWidgetState extends State<AuctionTimerWidget> {
   Duration _timeRemaining = Duration.zero;
   bool isActive = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _startOrStopTimer();
-  }
-
-  @override
-  void didUpdateWidget(covariant AuctionTimerWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.endTime != widget.endTime) {
-      _timer?.cancel();
-      _timer = null;
-      _startOrStopTimer();
-    }
-  }
-
   void _calculateAndUpdateTime() async {
     final now = DateTime.now();
     final remaining = widget.endTime.difference(now);
@@ -78,12 +62,6 @@ class _AuctionTimerWidgetState extends State<AuctionTimerWidget> {
     });
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final String hours = twoDigits(duration.inHours);
@@ -93,14 +71,38 @@ class _AuctionTimerWidgetState extends State<AuctionTimerWidget> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _startOrStopTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant AuctionTimerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.endTime != widget.endTime) {
+      _timer?.cancel();
+      _timer = null;
+      _startOrStopTimer();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Text(
       isActive == true ? _formatDuration(_timeRemaining) : 'Leilão Encerrado.',
       style: TextStyle(
         fontWeight: FontWeight.bold,
         fontSize: 16,
-        color: isActive == true ? const Color(0xFF374151) : const Color(0xFFDC2626),
+        color: isActive == true
+            ? const Color(0xFF374151)
+            : const Color(0xFFDC2626),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 }

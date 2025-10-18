@@ -83,7 +83,10 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                   auction.product!.name,
                   textAlign: TextAlign.start,
                   maxLines: 2,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   auction.product!.description,
@@ -95,7 +98,10 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Lance Atual:', style: TextStyle(fontSize: 12)),
+                        const Text(
+                          'Lance Atual:',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         Text(
                           currencyFormat(auction.currentBid),
 
@@ -110,9 +116,12 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('Tempo Restante:', style: TextStyle(fontSize: 12)),
+                        const Text(
+                          'Tempo Restante:',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         AuctionTimerWidget(
-                          endTime: auction.endTime,
+                          endTime: auction.endDateAndTime,
                           updateList: () => widget.updateList(),
                         ),
                       ],
@@ -124,7 +133,12 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 59, 130, 246),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          59,
+                          130,
+                          246,
+                        ),
                         foregroundColor: Colors.white,
 
                         shape: RoundedRectangleBorder(
@@ -184,5 +198,10 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

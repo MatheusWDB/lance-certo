@@ -9,7 +9,7 @@ class ProductService {
 
   static String token = User.currentUser!.token!;
 
-  static Future<List<Product>> fetchAllProducts() async {
+  static Future<List<Product>> fetchProductsBySeller() async {
     final response = await http.get(
       Uri.parse('$baseUrl/seller'),
       headers: {
@@ -18,14 +18,13 @@ class ProductService {
       },
     );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((item) => Product.fromJson(item)).toList();
-    } else {
-      throw Exception(
-        'Falha ao carregar produtos: ${response.statusCode} - ${response.body}',
-      );
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
+
+    return data.map((item) => Product.fromJson(item)).toList();
   }
 
   static Future<void> createProduct(Product product) async {
@@ -39,9 +38,8 @@ class ProductService {
     );
 
     if (response.statusCode != 201) {
-      throw Exception(
-        'Falha ao criar produto: ${response.statusCode} - ${response.body}',
-      );
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
   }
 }

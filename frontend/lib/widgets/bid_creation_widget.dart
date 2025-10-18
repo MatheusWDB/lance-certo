@@ -1,3 +1,4 @@
+import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lance_certo/models/auction.dart';
@@ -21,6 +22,7 @@ class BidCreationWidget extends StatefulWidget {
 class _BidCreationWidgetState extends State<BidCreationWidget> {
   late Auction auction;
 
+  String? _error;
   bool _isLoading = false;
   final TextEditingController _bidController = TextEditingController();
 
@@ -50,26 +52,36 @@ class _BidCreationWidgetState extends State<BidCreationWidget> {
       });
 
       Navigator.of(context).pop();
+    } on FormatException {
+      setState(() {
+        _error = 'Formato inválido.';
+        _isLoading = false;
+      });
     } catch (e) {
-      debugPrint(e.toString());
-
+      debugPrint('Erro ao criar lance: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
 
         final String errorMessage = e.toString();
-        final String cleanMessage = errorMessage.replaceFirst(
-          'Exception: ',
+        String cleanMessage = errorMessage.replaceFirst(
+          'Exception: Falha ao criar lance: ',
           '',
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(cleanMessage, textAlign: TextAlign.center),
-            duration: const Duration(seconds: 3),
-            backgroundColor: Colors.red,
-          ),
+        if (cleanMessage.contains('menor')) {
+          cleanMessage = 'O lance não pode ser menor do quê o mínimo';
+        }
+
+        setState(() {
+          _error = cleanMessage;
+        });
+
+        AlertInfo.show(
+          context: context,
+          text: cleanMessage,
+          typeInfo: TypeInfo.error,
         );
       }
     }
@@ -79,12 +91,6 @@ class _BidCreationWidgetState extends State<BidCreationWidget> {
   void initState() {
     super.initState();
     auction = widget.auction;
-  }
-
-  @override
-  void dispose() {
-    _bidController.dispose();
-    super.dispose();
   }
 
   @override
@@ -100,7 +106,10 @@ class _BidCreationWidgetState extends State<BidCreationWidget> {
             children: [
               Column(
                 children: [
-                  const Text('Faça seu lance:', style: TextStyle(fontSize: 20.0)),
+                  const Text(
+                    'Faça seu lance:',
+                    style: TextStyle(fontSize: 20.0),
+                  ),
                   Text(
                     auction.product!.name,
                     style: const TextStyle(
@@ -149,11 +158,22 @@ class _BidCreationWidgetState extends State<BidCreationWidget> {
                             controller: _bidController,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              constraints: const BoxConstraints(maxWidth: 300.0),
+                              errorText: _error,
+                              errorMaxLines: 2,
+                              constraints: const BoxConstraints(
+                                maxWidth: 300.0,
+                              ),
                               labelText:
                                   'Mínimo: ${currencyFormat(auction.currentBid == 0 ? auction.initialPrice + auction.minimunBidIncrement : auction.currentBid! + auction.minimunBidIncrement)}',
                               border: const OutlineInputBorder(),
                             ),
+                            onChanged: (value) {
+                              if (_error != null) {
+                                setState(() {
+                                  _error = null;
+                                });
+                              }
+                            },
                           ),
                         ],
                       ),
@@ -163,7 +183,12 @@ class _BidCreationWidgetState extends State<BidCreationWidget> {
                             vertical: 18.0,
                             horizontal: 60.0,
                           ),
-                          backgroundColor: const Color.fromARGB(255, 22, 163, 74),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            22,
+                            163,
+                            74,
+                          ),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
@@ -192,5 +217,11 @@ class _BidCreationWidgetState extends State<BidCreationWidget> {
         ],
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    _bidController.dispose();
+    super.dispose();
   }
 }

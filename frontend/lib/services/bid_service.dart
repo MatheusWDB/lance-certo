@@ -10,11 +10,7 @@ class BidService {
 
   static String token = User.currentUser!.token!;
 
-  static Future<void> createBid(
-    int auctionId,
-    Bid bid,
-  ) async {
-
+  static Future<void> createBid(int auctionId, Bid bid) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auctions/$auctionId/bidder'),
       headers: {
@@ -26,9 +22,7 @@ class BidService {
 
     if (response.statusCode != 201) {
       final data = jsonDecode(response.body);
-      throw Exception(
-        'Falha ao criar lance: ${data['message']}',
-      );
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
   }
 
@@ -41,21 +35,18 @@ class BidService {
       },
     );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseBody = json.decode(response.body);
+    final Map<String, dynamic> data = json.decode(response.body);
 
-      return PaginatedResponse.fromJson(
-        responseBody,
-        (json) => Bid.fromJson(json),
-      );
-    } else {
-      throw Exception(
-        'Falha ao carregar lances: ${response.statusCode} - ${response.body}',
-      );
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
+
+    return PaginatedResponse.fromJson(data, (json) => Bid.fromJson(json));
   }
 
-  static Future<PaginatedResponse<Bid>> fetchBidsByAuction(int auctionId) async {
+  static Future<PaginatedResponse<Bid>> fetchBidsByAuction(
+    int auctionId,
+  ) async {
     final response = await http.get(
       Uri.parse('$baseUrl/auctions/$auctionId'),
       headers: {
@@ -64,17 +55,12 @@ class BidService {
       },
     );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseBody = json.decode(response.body);
+    final Map<String, dynamic> data = json.decode(response.body);
 
-      return PaginatedResponse.fromJson(
-        responseBody,
-        (json) => Bid.fromJson(json),
-      );
-    } else {
-      throw Exception(
-        'Falha ao carregar lances: ${response.statusCode} - ${response.body}',
-      );
-    }
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
+    } 
+    
+    return PaginatedResponse.fromJson(data, (json) => Bid.fromJson(json));
   }
 }

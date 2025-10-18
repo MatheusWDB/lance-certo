@@ -28,14 +28,18 @@ class AuctionService {
       queryParams.addAll(filters.toQueryParams());
     }
 
-    final Map<String, String> finalQueryParams = queryParams.map((key, value) {
+    /** 
+    final Map<String, Object?> finalQueryParams = queryParams.map((key, value) {
       if (value is List) {
         return MapEntry(key, value.map((e) => e.toString()).toList());
       }
       return MapEntry(key, value.toString());
-    }).cast<String, String>();
+    }).cast<String, Object?>();
 
-    final uri = Uri.http('127.0.0.1:8080', '/api/auctions', finalQueryParams);
+    finalQueryParams.forEach((key, value) => print(value.toString()));
+    */
+
+    final uri = Uri.http('127.0.0.1:8080', '/api/auctions', queryParams);
 
     final response = await http.get(
       uri,
@@ -45,18 +49,13 @@ class AuctionService {
       },
     );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseBody = json.decode(response.body);
+    final Map<String, dynamic> data = json.decode(response.body);
 
-      return PaginatedResponse.fromJson(
-        responseBody,
-        (json) => Auction.fromJson(json),
-      );
-    } else {
-      throw Exception(
-        'Falha ao carregar leilões: ${response.statusCode} - ${response.body}',
-      );
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
+
+    return PaginatedResponse.fromJson(data, (json) => Auction.fromJson(json));
   }
 
   static Future<void> createAuctions(Map<String, dynamic> controller) async {
@@ -72,9 +71,8 @@ class AuctionService {
     );
 
     if (response.statusCode != 201) {
-      throw Exception(
-        'Falha ao criar leilão: ${response.statusCode} - ${response.body}',
-      );
+      final data = jsonDecode(response.body);
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
   }
 
@@ -87,37 +85,30 @@ class AuctionService {
       },
     );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseBody = json.decode(response.body);
+    final Map<String, dynamic> data = json.decode(response.body);
 
-      return PaginatedResponse.fromJson(
-        responseBody,
-        (json) => Auction.fromJson(json),
-      );
-    } else {
-      throw Exception(
-        'Falha ao carregar leilões do vendedor: ${response.statusCode} - ${response.body}',
-      );
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
+
+    return PaginatedResponse.fromJson(data, (json) => Auction.fromJson(json));
   }
 
   static Future<Auction> fetchAuctionById(int auctionId) async {
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:8080/api/auction/$auctionId'),
+      Uri.parse('$baseUrl/$auctionId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseBody = json.decode(response.body);
+    final Map<String, dynamic> data = json.decode(response.body);
 
-      return Auction.fromJson(responseBody);
-    } else {
-      throw Exception(
-        'Falha ao carregar leilões do vendedor: ${response.statusCode} - ${response.body}',
-      );
+    if (response.statusCode != 200) {
+      throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
+
+    return Auction.fromJson(data);
   }
 }

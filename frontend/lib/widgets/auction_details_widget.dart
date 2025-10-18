@@ -1,3 +1,4 @@
+import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lance_certo/models/auction.dart';
@@ -29,6 +30,8 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
 
   bool _isLoading = false;
   bool isActive = true;
+  String? _error;
+
   final TextEditingController _bidController = TextEditingController();
 
   String currencyFormat(double? number) {
@@ -57,8 +60,46 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
       });
 
       await widget.updateList!();
+    } on FormatException {
+      setState(() {
+        _error = 'Formato inválido.';
+        _isLoading = false;
+      });
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint('Erro ao criar lance: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        final String errorMessage = e.toString();
+        String cleanMessage = errorMessage.replaceFirst(
+          'Exception: Falha ao criar lance: ',
+          '',
+        );
+
+        if (cleanMessage.contains('menor')) {
+          cleanMessage = 'O lance não pode ser menor do quê o mínimo';
+        }
+
+        setState(() {
+          _error = cleanMessage;
+        });
+
+        AlertInfo.show(
+          context: context,
+          text: cleanMessage,
+          typeInfo: TypeInfo.error,
+        );
+      }
+    }
+  }
+
+  void _fetchBidsByAuction() {
+    try {
+      _bids = BidService.fetchBidsByAuction(_auction.id!);
+    } catch (e) {
+      debugPrint('Erro ao buscar lances: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -70,39 +111,50 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
           '',
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(cleanMessage, textAlign: TextAlign.center),
-            duration: const Duration(seconds: 3),
-            backgroundColor: Colors.red,
-          ),
+        AlertInfo.show(
+          context: context,
+          text: cleanMessage,
+          typeInfo: TypeInfo.error,
         );
       }
     }
   }
 
-  void _fetchBidsByAuction() {
-    _bids = BidService.fetchBidsByAuction(_auction.id!);
-  }
-
   Future<void> _fetchAuctionById() async {
-    _auction = await AuctionService.fetchAuctionById(_auction.id!);
+    try {
+      _auction = await AuctionService.fetchAuctionById(_auction.id!);
+    } catch (e) {
+      debugPrint('Erro ao buscar leilão: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        final String errorMessage = e.toString();
+        final String cleanMessage = errorMessage.replaceFirst(
+          'Exception: ',
+          '',
+        );
+
+        AlertInfo.show(
+          context: context,
+          text: cleanMessage,
+          typeInfo: TypeInfo.error,
+        );
+      }
+    }
   }
 
   @override
   void initState() {
     super.initState();
+
     _auction = widget.auction;
     _fetchBidsByAuction();
+
     if (_auction.status != AuctionStatus.ACTIVE) {
       isActive = false;
     }
-  }
-
-  @override
-  void dispose() {
-    _bidController.dispose();
-    super.dispose();
   }
 
   @override
@@ -118,7 +170,10 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
               Text(
                 _auction.product!.name,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 32.0,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Container(
                 decoration: const BoxDecoration(
@@ -175,7 +230,10 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
                         Expanded(
                           child: Column(
                             children: [
-                              const Text('Lance Atual:', textAlign: TextAlign.center),
+                              const Text(
+                                'Lance Atual:',
+                                textAlign: TextAlign.center,
+                              ),
                               Text(
                                 currencyFormat(_auction.currentBid),
                                 style: const TextStyle(
@@ -190,18 +248,34 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
                           child: Column(
                             spacing: 8.0,
                             children: [
-                              const Text('Seu Lance:', textAlign: TextAlign.start),
+                              const Text(
+                                'Seu Lance:',
+                                textAlign: TextAlign.start,
+                              ),
                               TextField(
                                 enabled: isActive,
                                 controller: _bidController,
                                 keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
-                                  constraints: const BoxConstraints(maxWidth: 300.0),
-                                  labelStyle: const TextStyle(color: Colors.grey),
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 300.0,
+                                  ),
+                                  labelStyle: const TextStyle(
+                                    color: Colors.grey,
+                                  ),
+                                  errorText: _error,
+                                  errorMaxLines: 2,
                                   labelText:
                                       'Mínimo: ${currencyFormat(_auction.currentBid == 0 ? _auction.initialPrice + _auction.minimunBidIncrement : _auction.currentBid! + _auction.minimunBidIncrement)}',
                                   border: const OutlineInputBorder(),
                                 ),
+                                onChanged: (value) {
+                                  if (_error != null) {
+                                    setState(() {
+                                      _error = null;
+                                    });
+                                  }
+                                },
                               ),
                             ],
                           ),
@@ -235,7 +309,7 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
                 children: [
                   const Text('Tempo Restante:', textAlign: TextAlign.center),
                   AuctionTimerWidget(
-                    endTime: _auction.endTime,
+                    endTime: _auction.endDateAndTime,
                     updateList: () async {
                       if (isActive) {
                         setState(() {
@@ -262,7 +336,7 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
                   color: const Color.fromARGB(255, 246, 247, 248),
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 230.0),
+                  constraints: const BoxConstraints(maxHeight: 198.0),
                   child: FutureBuilder<PaginatedResponse<Bid>>(
                     future: _bids,
                     builder: (context, snapshot) {
@@ -309,5 +383,11 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
         ],
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    _bidController.dispose();
+    super.dispose();
   }
 }
