@@ -7,10 +7,10 @@ import br.com.hematsu.lance_certo.dto.bid.BidResponseDTO;
 import br.com.hematsu.lance_certo.model.Bid;
 
 @Mapper(componentModel = "spring", uses = { UserMapper.class,
-      AuctionMapper.class })
+            AuctionMapper.class })
 public interface BidMapper {
 
-   @Mapping(target = "auction", source = "auction")
-   @Mapping(target = "bidder", source = "bidder")
-   BidResponseDTO toBidResponseDTO(Bid bid);
+      @Mapping(target = "auction", source = "auction")
+      @Mapping(target = "bidder", source = "bidder")
+      BidResponseDTO toBidResponseDTO(Bid bid);
 }
