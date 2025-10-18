@@ -1,5 +1,7 @@
+import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
 import 'package:lance_certo/models/user.dart';
+import 'package:lance_certo/models/user_role.dart';
 import 'package:lance_certo/services/user_service.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -19,6 +21,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     'phone': TextEditingController(),
     'password': TextEditingController(),
     'confirmPassword': TextEditingController(),
+    'role': TextEditingController(),
   };
   Map<String, String?> error = {
     'name': null,
@@ -27,15 +30,93 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     'phone': null,
     'password': null,
     'confirmPassword': null,
+    'role': null,
   };
 
   bool viewPassword = false;
   bool viewConfirmPassword = false;
 
+  void _chooseTheRole() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            bool roleSelected = false;
+
+            if (controller['role']!.text.isNotEmpty) {
+              roleSelected = true;
+            }
+
+            return Dialog(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  spacing: 8.0,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Escolha o tipo de conta'),
+                    DropdownMenu(
+                      //label: Text(roleSelected ? label! : ''),
+                      controller: controller['role'],
+                      errorText: error['role'],
+                      onSelected: (value) {
+                        setDialogState(() {
+                          roleSelected = true;
+
+                          if (error['role'] != null) {
+                            error['role'] = null;
+                          }
+                        });
+                      },
+                      dropdownMenuEntries: UserRole.values
+                          .where((element) => element != UserRole.ADMIN)
+                          .map((e) {
+                            return DropdownMenuEntry(
+                              label: e.displayName,
+                              value: e,
+                            );
+                          })
+                          .toList(),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 52.0,
+                          vertical: 16.0,
+                        ),
+                        backgroundColor: const Color(0xFF16A34A),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      onPressed: roleSelected
+                          ? () {
+                              register();
+                              Navigator.of(context).pop();
+                            }
+                          : null,
+
+                      child: const Text('Registrar'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void register() async {
     setState(() {
       _isLoading = true;
     });
+
+    bool hasErrors = false;
 
     final attributes = [
       'name',
@@ -48,12 +129,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     for (var attribute in attributes) {
       if (controller[attribute]!.text.isEmpty) {
-        setState(() {
-          error[attribute] = 'Campo requerido';
-          _isLoading = false;
-        });
-        return;
+        error[attribute] = 'Campo obrigatório.';
+        hasErrors = true;
       }
+    }
+
+    if (hasErrors) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
     }
 
     if (!controller['email']!.text.contains('@') ||
@@ -66,7 +151,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         setState(() {
           error['email'] = 'Inválido';
           _isLoading = false;
-        });        
+        });
         return;
       }
     }
@@ -121,12 +206,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           '',
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(cleanMessage, textAlign: TextAlign.center),
-            duration: const Duration(seconds: 3),
-            backgroundColor: Colors.red,
-          ),
+        AlertInfo.show(
+          context: context,
+          text: cleanMessage,
+          typeInfo: TypeInfo.error,
         );
       }
     }
@@ -151,12 +234,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   @override
-  void dispose() {
-    controller.forEach((key, value) => value.dispose());
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -169,7 +246,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.376,
                   ),
-                  height: MediaQuery.of(context).size.height * 0.789,
+                  height: MediaQuery.of(context).size.height * 0.894,
                   padding: const EdgeInsets.all(32.0),
                   margin: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
@@ -179,6 +256,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     boxShadow: const [BoxShadow(blurRadius: 10.0)],
                   ),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 20.0,
                     children: [
                       const Text(
@@ -336,7 +414,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                         ),
-                        onPressed: () => register(),
+                        onPressed: () => _chooseTheRole(),
                         child: const Text(
                           'Registrar',
                           style: TextStyle(
@@ -381,5 +459,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    controller.forEach((key, value) => value.dispose());
+    super.dispose();
   }
 }
