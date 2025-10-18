@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import br.com.hematsu.lance_certo.dto.auction.AuctionFilterParamsDTO;
 import br.com.hematsu.lance_certo.model.Auction;
 import br.com.hematsu.lance_certo.model.AuctionStatus;
+import jakarta.persistence.criteria.Expression;
 
 public class AuctionSpecifications {
 
@@ -100,20 +101,43 @@ public class AuctionSpecifications {
         };
     }
 
-    public static Specification<Auction> currentBidBetween(BigDecimal minBid, BigDecimal maxBid) {
-        String attributeName = "currentBid";
+    public static Specification<Auction> minCurrentBidBetween(BigDecimal minBid, BigDecimal maxBid) {
+        String currentBidAttribute = "currentBid";
+        String minIncrementAttribute = "minimunBidIncrement";
 
         return (root, query, criteriaBuilder) -> {
             if (minBid == null && maxBid == null) {
                 return criteriaBuilder.isTrue(criteriaBuilder.literal(true));
             }
+
+            Expression<BigDecimal> currentBidPath = root.get(currentBidAttribute);
+            Expression<BigDecimal> minIncrementPath = root.get(minIncrementAttribute);
+
             if (minBid != null && maxBid != null) {
-                return criteriaBuilder.between(root.get(attributeName), minBid, maxBid);
+                Expression<BigDecimal> lowerBound = criteriaBuilder.sum(
+                        criteriaBuilder.literal(minBid),
+                        minIncrementPath);
+
+                Expression<BigDecimal> upperBound = criteriaBuilder.sum(
+                        criteriaBuilder.literal(maxBid),
+                        minIncrementPath);
+
+                return criteriaBuilder.between(currentBidPath, lowerBound, upperBound);
             }
+
             if (minBid != null) {
-                return criteriaBuilder.greaterThanOrEqualTo(root.get(attributeName), minBid);
+                Expression<BigDecimal> lowerBound = criteriaBuilder.sum(
+                        criteriaBuilder.literal(minBid),
+                        minIncrementPath);
+
+                return criteriaBuilder.greaterThanOrEqualTo(currentBidPath, lowerBound);
             }
-            return criteriaBuilder.lessThanOrEqualTo(root.get(attributeName), maxBid);
+
+            Expression<BigDecimal> upperBound = criteriaBuilder.sum(
+                    criteriaBuilder.literal(maxBid),
+                    minIncrementPath);
+
+            return criteriaBuilder.lessThanOrEqualTo(currentBidPath, upperBound);
         };
     }
 
@@ -159,8 +183,9 @@ public class AuctionSpecifications {
 
     public static Specification<Auction> withFilters(AuctionFilterParamsDTO auctionFilterParamsDTO) {
 
-       List<String> productCategories = null;
-        if (auctionFilterParamsDTO.productCategories() != null && !auctionFilterParamsDTO.productCategories().trim().isEmpty()) {
+        List<String> productCategories = null;
+        if (auctionFilterParamsDTO.productCategories() != null
+                && !auctionFilterParamsDTO.productCategories().trim().isEmpty()) {
             productCategories = Arrays.stream(auctionFilterParamsDTO.productCategories().split(","))
                     .map(String::trim).toList();
         }
@@ -183,11 +208,12 @@ public class AuctionSpecifications {
         specs.add(sellerNameLike(auctionFilterParamsDTO.sellerName()));
         specs.add(winnerNameLike(auctionFilterParamsDTO.winnerName()));
         specs.add(hasStatusIn(statuses));
-        specs.add(initialPriceBetween(auctionFilterParamsDTO.minInitialPrice(), auctionFilterParamsDTO.maxInitialPrice()));
-        specs.add(currentBidBetween(auctionFilterParamsDTO.minCurrentBid(), auctionFilterParamsDTO.maxCurrentBid()));
+        specs.add(initialPriceBetween(auctionFilterParamsDTO.minInitialPrice(),
+                auctionFilterParamsDTO.maxInitialPrice()));
+        specs.add(minCurrentBidBetween(auctionFilterParamsDTO.minCurrentBid(), auctionFilterParamsDTO.maxCurrentBid()));
         specs.add(startTimeBetween(auctionFilterParamsDTO.minStartTime(), auctionFilterParamsDTO.maxStartTime()));
         specs.add(endTimeBetween(auctionFilterParamsDTO.minEndTime(), auctionFilterParamsDTO.maxEndTime()));
-        
+
         return Specification.allOf(specs);
     }
 }
