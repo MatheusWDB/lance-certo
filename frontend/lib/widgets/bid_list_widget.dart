@@ -45,12 +45,19 @@ class _BidListWidgetState extends State<BidListWidget> {
               ),
             ),
             Expanded(
-              child: Text(DateFormat('HH:mm:ss').format(widget.bid.createdAt!),
-                textAlign: TextAlign.end,),
+              child: Text(
+                DateFormat('HH:mm:ss').format(widget.bid.createdAt!),
+                textAlign: TextAlign.end,
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }
