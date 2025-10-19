@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lance_certo/screens/home_screen.dart';
 import 'package:lance_certo/screens/registration_screen.dart';
 import 'package:lance_certo/services/user_service.dart';
+import 'package:lance_certo/services/web_socket_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -85,6 +86,8 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _isLoading = false;
       });
+
+      WebSocketService.connect();
 
       Navigator.pushReplacement(
         context,
