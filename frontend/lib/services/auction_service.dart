@@ -10,7 +10,9 @@ import 'package:lance_certo/models/user.dart';
 class AuctionService {
   static const String baseUrl = 'http://127.0.0.1:8080/api/auctions';
 
-  static String token = User.currentUser!.token!;
+  static String? _getAuthToken() {
+    return User.token;
+  }
 
   static Future<PaginatedResponse<Auction>> fetchAllAuctions(
     Pageable pageable,
@@ -45,7 +47,7 @@ class AuctionService {
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
     );
 
@@ -65,7 +67,7 @@ class AuctionService {
       Uri.parse('$baseUrl/create/sellers'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
       body: jsonEncode(auction),
     );
@@ -81,7 +83,7 @@ class AuctionService {
       Uri.parse('$baseUrl/seller'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
     );
 
@@ -99,7 +101,7 @@ class AuctionService {
       Uri.parse('$baseUrl/$auctionId'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
     );
 

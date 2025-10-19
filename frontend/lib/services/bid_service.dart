@@ -8,14 +8,16 @@ import 'package:lance_certo/models/user.dart';
 class BidService {
   static const String baseUrl = 'http://127.0.0.1:8080/api/bids';
 
-  static String token = User.currentUser!.token!;
+  static String? _getAuthToken() {
+    return User.token;
+  }
 
   static Future<void> createBid(int auctionId, Bid bid) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auctions/$auctionId/bidder'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
       body: json.encode(bid.toJson()),
     );
@@ -31,7 +33,7 @@ class BidService {
       Uri.parse('$baseUrl/bidder'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
     );
 
@@ -51,7 +53,7 @@ class BidService {
       Uri.parse('$baseUrl/auctions/$auctionId'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
     );
 
@@ -59,8 +61,8 @@ class BidService {
 
     if (response.statusCode != 200) {
       throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
-    } 
-    
+    }
+
     return PaginatedResponse.fromJson(data, (json) => Bid.fromJson(json));
   }
 }

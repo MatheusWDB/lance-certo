@@ -35,7 +35,7 @@ class UserService {
 
     final Map<String, dynamic> userMap = data['userDTO'];
     final loggedUser = User.fromJson(userMap);
-    loggedUser.token = data['token'];
+    User.token = data['token'];
     User.currentUser = loggedUser;
   }
 
@@ -44,7 +44,7 @@ class UserService {
     String currentPassword,
     String newPassword,
   ) async {
-    final String token = User.currentUser!.token!;
+    final String token = User.token!;
 
     final response = await http.patch(
       Uri.parse('$baseUrl/update'),

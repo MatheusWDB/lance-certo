@@ -7,14 +7,16 @@ import 'package:lance_certo/models/user.dart';
 class ProductService {
   static const String baseUrl = 'http://127.0.0.1:8080/api/products';
 
-  static String token = User.currentUser!.token!;
+  static String? _getAuthToken() {
+    return User.token;
+  }
 
   static Future<List<Product>> fetchProductsBySeller() async {
     final response = await http.get(
       Uri.parse('$baseUrl/seller'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
     );
 
@@ -32,7 +34,7 @@ class ProductService {
       Uri.parse('$baseUrl/create/sellers'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Bearer ${_getAuthToken()}',
       },
       body: jsonEncode(product.toJson()),
     );

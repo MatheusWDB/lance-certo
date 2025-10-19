@@ -10,7 +10,6 @@ class User {
     this.role,
     this.createdAt,
     this.updatedAt,
-    this.token,
   });
 
   final int? id;
@@ -21,8 +20,8 @@ class User {
   UserRole? role;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-  String? token;
 
+  static String? token;
   static User? currentUser;
 
   factory User.fromJson(Map<String, dynamic> json) {
