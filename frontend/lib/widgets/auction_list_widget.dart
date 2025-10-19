@@ -4,7 +4,6 @@ import 'package:lance_certo/models/auction.dart';
 import 'package:lance_certo/models/auction_status.dart';
 import 'package:lance_certo/widgets/auction_details_widget.dart';
 import 'package:lance_certo/widgets/auction_timer_widget.dart';
-import 'package:lance_certo/widgets/bid_creation_widget.dart';
 
 class AuctionListWidget extends StatefulWidget {
   const AuctionListWidget({
@@ -128,69 +127,34 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                     ),
                   ],
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(
-                          255,
-                          59,
-                          130,
-                          246,
-                        ),
-                        foregroundColor: Colors.white,
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 59, 130, 246),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
                       ),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          backgroundColor: Colors.white,
-                          context: context,
-                          isScrollControlled: true,
-                          builder: (BuildContext context) {
-                            return AuctionDetailsWidget(
-                              auction: auction,
-                              updateList: widget.updateList,
-                            );
-                          },
-                        );
-                      },
-                      child: const Text('Ver Detalhes'),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 22, 163, 74),
-                        foregroundColor: Colors.white,
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                       ),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return BidCreationWidget(
-                              auction: auction,
-                              updateList: () => widget.updateList(),
-                            );
-                          },
-                        );
-                      },
-                      child: const Text('Dar Lance'),
                     ),
-                  ],
+                    onPressed: () {
+                      showModalBottomSheet(
+                        backgroundColor: Colors.white,
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (BuildContext context) {
+                          return AuctionDetailsWidget(
+                            auction: auction,
+                            updateList: widget.updateList,
+                          );
+                        },
+                      );
+                    },
+                    child: const Text('Ver Detalhes'),
+                  ),
                 ),
               ],
             ),
