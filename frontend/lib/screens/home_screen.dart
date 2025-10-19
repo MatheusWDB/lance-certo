@@ -10,9 +10,11 @@ import 'package:lance_certo/models/paginated_response.dart';
 import 'package:lance_certo/models/user.dart';
 import 'package:lance_certo/models/user_role.dart';
 import 'package:lance_certo/services/auction_service.dart';
+import 'package:lance_certo/services/web_socket_service.dart';
 import 'package:lance_certo/widgets/auction_creation_widget.dart';
 import 'package:lance_certo/widgets/auction_list_widget.dart';
 import 'package:lance_certo/widgets/main_menu_widget.dart';
+import 'package:lance_certo/widgets/web_socket_notifier_mixin.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,7 +23,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with WebSocketNotifierMixin<HomeScreen> {
   late Future<PaginatedResponse<Auction>> _auctionsFuture;
 
   final Pageable _pagination = Pageable(page: 0, size: 6);
@@ -134,6 +137,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
+    WebSocketService.registerBidNotifier(onBidUpdate);
+    WebSocketService.registerStatusNotifier(onStatusUpdate);
 
     for (var filter in AuctionFilterParamsEnum.values) {
       _filterTextController[filter.name] = TextEditingController();
@@ -476,6 +482,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _selectedFilterMenuController.dispose();
     _filterTextController.forEach((key, value) => value.dispose());
+    WebSocketService.unregisterBidNotifier(onBidUpdate);
+    WebSocketService.unregisterStatusNotifier(onStatusUpdate);
     super.dispose();
   }
 }
