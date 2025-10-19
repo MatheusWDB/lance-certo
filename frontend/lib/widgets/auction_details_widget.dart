@@ -7,8 +7,10 @@ import 'package:lance_certo/models/bid.dart';
 import 'package:lance_certo/models/paginated_response.dart';
 import 'package:lance_certo/services/auction_service.dart';
 import 'package:lance_certo/services/bid_service.dart';
+import 'package:lance_certo/services/web_socket_service.dart';
 import 'package:lance_certo/widgets/auction_timer_widget.dart';
 import 'package:lance_certo/widgets/bid_list_widget.dart';
+import 'package:lance_certo/widgets/web_socket_notifier_mixin.dart';
 
 class AuctionDetailsWidget extends StatefulWidget {
   const AuctionDetailsWidget({
@@ -27,6 +29,8 @@ class AuctionDetailsWidget extends StatefulWidget {
 class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
   late Auction _auction;
   late Future<PaginatedResponse<Bid>> _bids;
+  late String _auctionBidsTopic;
+  late String _auctionStatusTopic;
 
   bool _isLoading = false;
   bool isActive = true;
@@ -50,6 +54,9 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
       );
 
       await BidService.createBid(_auction.id!, bidValue);
+
+      WebSocketService.subscribe(_auctionBidsTopic);
+      WebSocketService.subscribe(_auctionStatusTopic);
 
       await _fetchAuctionById();
       _fetchBidsByAuction();
@@ -151,6 +158,8 @@ class _AuctionDetailsWidgetState extends State<AuctionDetailsWidget> {
 
     _auction = widget.auction;
     _fetchBidsByAuction();
+    _auctionBidsTopic = WebSocketService.getAuctionBidsTopic(_auction.id!);
+    _auctionStatusTopic = WebSocketService.getAuctionStatusTopic(_auction.id!);
 
     if (_auction.status != AuctionStatus.ACTIVE) {
       isActive = false;
