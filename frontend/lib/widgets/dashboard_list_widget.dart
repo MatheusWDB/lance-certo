@@ -16,7 +16,7 @@ class DashboardListWidget extends StatefulWidget {
     required this.updateList,
     super.key,
   });
-  
+
   final int activeMenu;
   final Object item;
   final Future<void> Function() updateList;
@@ -258,8 +258,7 @@ class _DashboardListWidgetState extends State<DashboardListWidget> {
   Widget build(BuildContext context) {
     if ((widget.activeMenu == 0 &&
             item.auction!.status != AuctionStatus.ACTIVE) ||
-        (widget.activeMenu == 1 &&
-            item.seller.id != User.currentUser!.id) ||
+        (widget.activeMenu == 1 && item.seller.id != User.currentUser!.id) ||
         (widget.activeMenu == 2 &&
             (item.auction!.status != AuctionStatus.CLOSED &&
                 item.auction!.status != AuctionStatus.CANCELLED))) {
