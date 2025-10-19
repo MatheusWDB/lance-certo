@@ -1,5 +1,6 @@
 package br.com.hematsu.lance_certo.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -10,6 +11,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry registry) {
@@ -23,9 +27,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-
-        registry.addEndpoint("/ws").setAllowedOrigins("http://127.0.0.1:5501", "http://127.0.0.1:5500",
-                "http://localhost:3000", "http://localhost:4200").withSockJS();
+        registry.addEndpoint("/ws").setAllowedOriginPatterns(allowedOrigins);
     }
 
 }
