@@ -1,5 +1,6 @@
 import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
+import 'package:lance_certo/mixins/validations_mixin.dart';
 import 'package:lance_certo/screens/home_screen.dart';
 import 'package:lance_certo/screens/registration_screen.dart';
 import 'package:lance_certo/services/user_service.dart';
@@ -12,37 +13,23 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with ValidationsMixin {
   bool _isLoading = false;
-
+  bool viewPassword = false;
+  Map<String, String?> error = {'username': null, 'password': null};
+  final _formKey = GlobalKey<FormState>();
   Map<String, TextEditingController> controller = {
     'username': TextEditingController(text: 'seller@gmail.com'),
     'password': TextEditingController(text: '12345678'),
   };
-  Map<String, String?> error = {'username': null, 'password': null};
-
-  bool viewPassword = false;
 
   void login() async {
     setState(() {
       _isLoading = true;
     });
 
-    bool hasErrors = false;
-
-    final attributes = ['username', 'password'];
-
-    for (var attribute in attributes) {
-      if (controller[attribute]!.text.isEmpty) {
-        error[attribute] = 'Campo obrigatório.';
-        hasErrors = true;
-      }
-    }
-
-    if (hasErrors) {
-      setState(() {
-        _isLoading = false;
-      });
+    if (!_formKey.currentState!.validate()) {
+      _isLoading = false;
       return;
     }
 
@@ -63,15 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
     */
-
-    if (controller['password']!.text.length < 8) {
-      setState(() {
-        error['password'] = 'A senha tem no mínimo 8 caracteres';
-
-        _isLoading = false;
-      });
-      return;
-    }
 
     try {
       await UserService.login(
@@ -131,6 +109,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Âncora
+
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+
+    /** 
+    X-Small	None	<576px
+    Small	sm	≥576px
+    Medium	md	≥768px
+    Large	lg	≥992px
+    Extra large	xl	≥1200px
+    Extra extra large	xxl	≥1400px    
+
+    final xsm = width < 576;
+    final sm = width >= 576;
+    final md = width >= 768;
+    final lg = width >= 992;
+    final xl = width >= 1200;
+    final xxl = width >= 1400;
+    */
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -140,10 +138,8 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: const BoxDecoration(color: Color(0xFFE2E8F0)),
               child: Center(
                 child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.376,
-                  ),
-                  height: MediaQuery.of(context).size.height * 0.523,
+                  constraints: BoxConstraints(maxWidth: width * 0.376),
+                  height: height * 0.523,
                   padding: const EdgeInsets.all(32.0),
                   margin: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
@@ -171,55 +167,77 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      TextField(
-                        autofocus: true,
-                        controller: controller['username'],
-                        decoration: InputDecoration(
-                          errorText: error['username'],
-                          labelText: 'Email ou Nome de Usuário',
-                          //constraints: BoxConstraints(maxWidth: 300.0),
-                          border: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            error['username'] = null;
-                          });
-                        },
-                      ),
-                      TextField(
-                        autocorrect: false,
-                        controller: controller['password'],
-                        decoration: InputDecoration(
-                          errorText: error['password'],
-                          labelText: 'Senha',
-                          //constraints: BoxConstraints(maxWidth: 300.0),
-                          border: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                viewPassword = !viewPassword;
-                              });
-                            },
-                            icon: Icon(
-                              viewPassword == true
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                      Form(
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Email ou Nome de Usuário:'),
+                                TextFormField(
+                                  autofocus: true,
+                                  controller: controller['username'],
+                                  decoration: InputDecoration(
+                                    errorText: error['username'],
+                                    hintText: 'Email ou Nome de Usuário',
+                                    //constraints: BoxConstraints(maxWidth: 300.0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  validator: (value) => isNotEmpty(value),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      error['username'] = null;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
-                          ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Senha:'),
+                                TextFormField(
+                                  autocorrect: false,
+                                  controller: controller['password'],
+                                  decoration: InputDecoration(
+                                    errorText: error['password'],
+                                    hintText: 'Senha',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    suffixIcon: IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          viewPassword = !viewPassword;
+                                        });
+                                      },
+                                      icon: Icon(
+                                        viewPassword == true
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                      ),
+                                    ),
+                                  ),
+                                  obscureText: !viewPassword,
+                                  obscuringCharacter: '*',
+                                  validator: (value) => combine([
+                                    () => isNotEmpty(value),
+                                    () => hasEightChars(value),
+                                  ]),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      error['password'] = null;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        obscureText: !viewPassword,
-                        obscuringCharacter: '*',
-                        onChanged: (value) {
-                          setState(() {
-                            error['password'] = null;
-                          });
-                        },
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
