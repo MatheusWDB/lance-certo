@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:lance_certo/models/auction_status.dart';
 import 'package:lance_certo/models/user.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
@@ -13,30 +14,45 @@ class WebSocketService {
     return User.token;
   }
 
-  static String getAuctionBidsTopic(int auctionId) =>
-      '/topic/bids/auctions/$auctionId';
-  static String getAuctionStatusTopic(int auctionId) =>
-      '/topic/auctions/$auctionId/status';
+  static String getBidUpdateTopic(int auctionId) =>
+      '/topic/auction/$auctionId/bids';
 
-  static final Set<Function(Map<String, dynamic>)> _activeBidNotifiers = {};
-  static final Set<Function(Map<String, dynamic>)> _activeStatusNotifiers = {};
+  static String getAuctionStatusTopic(int auctionId) =>
+      '/topic/auction/$auctionId/status';
+
+  static String getSellerBidTopic(int sellerId) =>
+      '/user/topic/seller/$sellerId/bids';
+
+  static String getSellerStatusTopic(int sellerId) =>
+      '/user/topic/seller/$sellerId/auction/status';
+
+  static late Function(Map<String, dynamic>) _activeBidNotifiers;
+  static late Function(Map<String, dynamic>) _activeStatusNotifiers;
+  static late Function(Map<String, dynamic>) _activeBidNotifiersForSellers;
+  static late Function(Map<String, dynamic>) _activeStatusNotifiersForSellers;
 
   static void registerBidNotifier(Function(Map<String, dynamic>) notifier) {
-    _activeBidNotifiers.add(notifier);
+    _activeBidNotifiers = notifier;
+    debugPrint('WebSocketService: Registro no BidNotifier.');
   }
 
   static void registerStatusNotifier(Function(Map<String, dynamic>) notifier) {
-    _activeStatusNotifiers.add(notifier);
+    _activeStatusNotifiers = notifier;
+    debugPrint('WebSocketService: Registro no StatusNotifier.');
   }
 
-  static void unregisterBidNotifier(Function(Map<String, dynamic>) notifier) {
-    _activeBidNotifiers.remove(notifier);
-  }
-
-  static void unregisterStatusNotifier(
+  static void registerBidNotifierForSellers(
     Function(Map<String, dynamic>) notifier,
   ) {
-    _activeStatusNotifiers.remove(notifier);
+    _activeBidNotifiersForSellers = notifier;
+    debugPrint('WebSocketService: Registro no BidNotifierForSellers.');
+  }
+
+  static void registerStatusNotifierForSellers(
+    Function(Map<String, dynamic>) notifier,
+  ) {
+    _activeStatusNotifiersForSellers = notifier;
+    debugPrint('WebSocketService: Registro no StatusNotifierForSellers.');
   }
 
   static void onConnect(StompFrame frame) {
@@ -109,27 +125,54 @@ class WebSocketService {
 
     final StompUnsubscribe unsubscribeFunctionNewBids = _stompClient!.subscribe(
       destination: destination,
-      headers: {'Authorization': 'Bearer ${_getAuthToken()}'},
+      headers: {'id': destination},
       callback: (StompFrame frame) {
         if (frame.body != null) {
+          debugPrint('WebSocketService.subscribe: Início do callback');
           final Map<String, dynamic> message = json.decode(frame.body!);
+          final bool isBidTopic = destination.contains('bids');
+          final bool isSellerTopic = destination.contains('seller');
 
-          if (destination.contains('status')) {
-            for (final notifier in _activeStatusNotifiers) {
-              notifier(message);
-            }
-
-            final int? auctionId = int.tryParse(destination.split('/')[3]);
-            final String destinationNewBid = getAuctionBidsTopic(auctionId!);
-
-            unsubscribe(destination);
-            unsubscribe(destinationNewBid);
-
+          if (isBidTopic) {
+            final notifier = isSellerTopic
+                ? _activeBidNotifiersForSellers
+                : _activeBidNotifiers;
+            notifier(message);
             return;
           }
 
-          for (final notifier in _activeBidNotifiers) {
-            notifier(message);
+          final notifier = isSellerTopic
+              ? _activeStatusNotifiersForSellers
+              : _activeStatusNotifiers;
+          notifier(message);
+
+          final String associatedBidTopic;
+
+          if (isSellerTopic) {
+            final int? sellerId = int.tryParse(destination.split('/')[4]);
+            if (sellerId == null) {
+              debugPrint(
+                'WebSocketService: Erro ao parsear Seller ID para desinscrição.',
+              );
+              return;
+            }
+
+            associatedBidTopic = getSellerBidTopic(sellerId);
+          } else {
+            final int? auctionId = int.tryParse(destination.split('/')[3]);
+            if (auctionId == null) {
+              debugPrint(
+                'WebSocketService: Erro ao parsear Auction ID para desinscrição.',
+              );
+              return;
+            }
+
+            associatedBidTopic = getBidUpdateTopic(auctionId);
+          }
+
+          if (message['status'] == AuctionStatus.CLOSED || message['status'] == AuctionStatus.CANCELLED) {
+            unsubscribe(associatedBidTopic);
+            unsubscribe(destination);
           }
         }
       },

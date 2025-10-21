@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lance_certo/models/auction.dart';
 import 'package:lance_certo/models/product.dart';
+import 'package:lance_certo/models/user.dart';
 import 'package:lance_certo/services/auction_service.dart';
 import 'package:lance_certo/services/product_service.dart';
+import 'package:lance_certo/services/web_socket_service.dart';
 import 'package:lance_certo/widgets/product_creaction_widget.dart';
 
 class AuctionCreationWidget extends StatefulWidget {
@@ -88,7 +90,6 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
   void _fetchAllProducts() {
     try {
       _productsFuture = ProductService.fetchProductsBySeller();
-      
     } catch (e) {
       debugPrint('Erro ao buscar produtos: $e');
       if (mounted) {
@@ -252,6 +253,16 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
     try {
       await AuctionService.createAuctions(newAuction.toJson());
 
+      final String sellerStatusTopic = WebSocketService.getSellerStatusTopic(
+        User.currentUser!.id!,
+      );
+      final String sellerBidTopic = WebSocketService.getSellerBidTopic(
+        User.currentUser!.id!,
+      );
+
+      WebSocketService.subscribe(sellerStatusTopic);
+      WebSocketService.subscribe(sellerBidTopic);
+
       if (!mounted) return;
 
       setState(() {
@@ -289,6 +300,14 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
   void initState() {
     super.initState();
     _fetchAllProducts();
+  }
+
+  @override
+  void dispose() {
+    _auctionController.forEach((key, value) {
+      if (key != 'product') value.dispose();
+    });
+    super.dispose();
   }
 
   @override
@@ -600,13 +619,5 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
         ],
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _auctionController.forEach((key, value) {
-      if (key != 'product') value.dispose();
-    });
-    super.dispose();
   }
 }
