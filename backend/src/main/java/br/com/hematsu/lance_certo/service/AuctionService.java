@@ -130,9 +130,13 @@ public class AuctionService {
         auctionRepository.saveAll(auctions);
 
         auctions.forEach(auction -> {
+            String destination = "/topic/auction/" + auction.getId() + "/status";
             AuctionDetailsResponseDTO auctionDTO = auctionMapper.toAuctionDetailsResponseDTO(auction);
-            String destination = "/topic/auctions/" + auctionDTO.id() + "/status";
             messagingTemplate.convertAndSend(destination, auctionDTO);
+
+            final Long sellerId = auction.getSeller().getId();
+            destination = "/topic/seller/" + sellerId + "/auction/status";
+            messagingTemplate.convertAndSendToUser(sellerId.toString(), destination, auctionDTO);
         });
     }
 
@@ -161,11 +165,14 @@ public class AuctionService {
         });
 
         auctionRepository.saveAll(auctions);
-
         auctions.forEach(auction -> {
+            String destination = "/topic/auction/" + auction.getId() + "/status";
             AuctionDetailsResponseDTO auctionDTO = auctionMapper.toAuctionDetailsResponseDTO(auction);
-            String destination = "/topic/auctions/" + auctionDTO.id() + "/status";
             messagingTemplate.convertAndSend(destination, auctionDTO);
+
+            final Long sellerId = auction.getSeller().getId();
+            destination = "/topic/seller/" + sellerId + "/auction/status";
+            messagingTemplate.convertAndSendToUser(sellerId.toString(), destination, auctionDTO);
         });
     }
 

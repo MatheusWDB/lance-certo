@@ -76,9 +76,13 @@ public class BidService {
 
         auctionService.save(auction);
 
-        String destination = "/topic/bids/auctions/" + auctionId;
+        String destination = "/topic/auction/" + auctionId + "/bids";
         BidResponseDTO bidResponse = bidMapper.toBidResponseDTO(bid);
         messagingTemplate.convertAndSend(destination, bidResponse);
+
+        final Long sellerId = auction.getSeller().getId();
+        destination = "/topic/seller/" + sellerId + "/bids";
+        messagingTemplate.convertAndSendToUser(sellerId.toString(), destination, bidResponse);
 
         return bidResponse;
     }
