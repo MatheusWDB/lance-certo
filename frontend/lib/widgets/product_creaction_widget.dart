@@ -61,7 +61,7 @@ class _ProductCreationWidgetState extends State<ProductCreationWidget> {
     );
 
     try {
-      ProductService.createProduct(newProduct);
+      await ProductService.createProduct(newProduct);
 
       if (!mounted) return;
 
@@ -92,6 +92,12 @@ class _ProductCreationWidgetState extends State<ProductCreationWidget> {
         );
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _productController.forEach((key, value) => value.dispose());
+    super.dispose();
   }
 
   @override
@@ -199,11 +205,5 @@ class _ProductCreationWidgetState extends State<ProductCreationWidget> {
         ],
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _productController.forEach((key, value) => value.dispose());
-    super.dispose();
   }
 }

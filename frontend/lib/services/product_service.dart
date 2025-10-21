@@ -26,7 +26,11 @@ class ProductService {
       throw Exception(data['message'] ?? 'Erro de autenticação desconhecido');
     }
 
-    return data.map((item) => Product.fromJson(item)).toList();
+    final List<dynamic> jsonList = data;
+
+    return jsonList
+        .map((item) => Product.fromJson(item as Map<String, dynamic>))
+        .toList();
   }
 
   static Future<void> createProduct(Product product) async {
