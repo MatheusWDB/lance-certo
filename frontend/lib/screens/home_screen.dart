@@ -14,7 +14,7 @@ import 'package:lance_certo/services/web_socket_service.dart';
 import 'package:lance_certo/widgets/auction_creation_widget.dart';
 import 'package:lance_certo/widgets/auction_list_widget.dart';
 import 'package:lance_certo/widgets/main_menu_widget.dart';
-import 'package:lance_certo/widgets/web_socket_notifier_mixin.dart';
+import 'package:lance_certo/mixins/web_socket_notifier_mixin.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -141,6 +141,11 @@ class _HomeScreenState extends State<HomeScreen>
     WebSocketService.registerBidNotifier(onBidUpdate);
     WebSocketService.registerStatusNotifier(onStatusUpdate);
 
+    if (User.currentUser!.role != UserRole.BUYER) {
+      WebSocketService.registerBidNotifierForSellers(onSellerBidUpdate);
+      WebSocketService.registerStatusNotifierForSellers(onSellerStatusUpdate);
+    }
+
     for (var filter in AuctionFilterParamsEnum.values) {
       _filterTextController[filter.name] = TextEditingController();
     }
@@ -150,6 +155,13 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       _fetchAuctionsWithPagination();
     });
+  }
+
+  @override
+  void dispose() {
+    _selectedFilterMenuController.dispose();
+    _filterTextController.forEach((key, value) => value.dispose());
+    super.dispose();
   }
 
   @override
@@ -322,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen>
                             const Text('Ordernar por:'),
                             DropdownMenu<AuctionSortOptionsEnum>(
                               controller: _sortMenuControllerSelected,
-                              textStyle: TextStyle(fontSize: 14.0),
+                              textStyle: const TextStyle(fontSize: 14.0),
                               width: MediaQuery.of(context).size.width * 0.188,
                               menuHeight:
                                   MediaQuery.of(context).size.height * 0.3,
@@ -476,14 +488,5 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _selectedFilterMenuController.dispose();
-    _filterTextController.forEach((key, value) => value.dispose());
-    WebSocketService.unregisterBidNotifier(onBidUpdate);
-    WebSocketService.unregisterStatusNotifier(onStatusUpdate);
-    super.dispose();
   }
 }

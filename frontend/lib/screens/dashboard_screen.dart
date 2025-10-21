@@ -11,7 +11,7 @@ import 'package:lance_certo/services/bid_service.dart';
 import 'package:lance_certo/services/web_socket_service.dart';
 import 'package:lance_certo/widgets/dashboard_list_widget.dart';
 import 'package:lance_certo/widgets/main_menu_widget.dart';
-import 'package:lance_certo/widgets/web_socket_notifier_mixin.dart';
+import 'package:lance_certo/mixins/web_socket_notifier_mixin.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -85,10 +85,22 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _fetchMyBidsWithAuctions();
     WebSocketService.registerBidNotifier(onBidUpdate);
     WebSocketService.registerStatusNotifier(onStatusUpdate);
+
+    if (User.currentUser!.role != UserRole.BUYER) {
+      WebSocketService.registerBidNotifierForSellers(onSellerBidUpdate);
+      WebSocketService.registerStatusNotifierForSellers(onSellerStatusUpdate);
+    }
+    
+    _tabController = TabController(length: 3, vsync: this);
+    _fetchMyBidsWithAuctions();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -280,13 +292,5 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    WebSocketService.unregisterBidNotifier(onBidUpdate);
-    WebSocketService.unregisterStatusNotifier(onStatusUpdate);
-    super.dispose();
   }
 }
