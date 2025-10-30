@@ -1,10 +1,13 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'package:lance_certo/models/user.dart';
 
 class UserService {
-  static const String baseUrl = 'http://127.0.0.1:8080/api/users';
+  static String address = dotenv.get('URL');
+  static String baseUrl = 'http://$address/api/users';
 
   static Future<void> registerUser(User user, String password) async {
     final response = await http.post(

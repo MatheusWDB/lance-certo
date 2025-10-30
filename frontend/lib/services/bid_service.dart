@@ -1,12 +1,14 @@
 import 'dart:convert';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:lance_certo/models/bid.dart';
 import 'package:lance_certo/models/paginated_response.dart';
 import 'package:lance_certo/models/user.dart';
 
 class BidService {
-  static const String baseUrl = 'http://127.0.0.1:8080/api/bids';
+  static String address = dotenv.get('URL');
+  static  String baseUrl = 'http://$address/api/bids';
 
   static String? _getAuthToken() {
     return User.token;

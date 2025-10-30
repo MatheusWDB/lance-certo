@@ -1,13 +1,15 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:lance_certo/models/auction_status.dart';
 import 'package:lance_certo/models/user.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 class WebSocketService {
   static StompClient? _stompClient;
-  static final String _socketUrl = 'ws://127.0.0.1:8080/ws';
+  static String address = dotenv.get('URL');
+  static final String _socketUrl = 'ws://$address/ws';
   static final Map<String, StompUnsubscribe> _subscriptions = {};
 
   static String? _getAuthToken() {
@@ -132,16 +134,19 @@ class WebSocketService {
           final Map<String, dynamic> message = json.decode(frame.body!);
           final bool isBidTopic = destination.contains('bids');
           final bool isSellerTopic = destination.contains('seller');
+          final Function(Map<String, dynamic>) notifier;
 
           if (isBidTopic) {
-            final notifier = isSellerTopic
+            notifier = isSellerTopic
                 ? _activeBidNotifiersForSellers
                 : _activeBidNotifiers;
-            notifier(message);
+            if (message['bidder']['id'] != User.currentUser!.id) {
+              notifier(message);
+            }
             return;
           }
 
-          final notifier = isSellerTopic
+          notifier = isSellerTopic
               ? _activeStatusNotifiersForSellers
               : _activeStatusNotifiers;
           notifier(message);
@@ -170,7 +175,8 @@ class WebSocketService {
             associatedBidTopic = getBidUpdateTopic(auctionId);
           }
 
-          if (message['status'] == AuctionStatus.CLOSED || message['status'] == AuctionStatus.CANCELLED) {
+          if (message['status'] == AuctionStatus.CLOSED ||
+              message['status'] == AuctionStatus.CANCELLED) {
             unsubscribe(associatedBidTopic);
             unsubscribe(destination);
           }

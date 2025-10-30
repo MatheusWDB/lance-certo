@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:lance_certo/models/auction.dart';
 import 'package:lance_certo/models/auction_filter_params.dart';
@@ -8,7 +9,8 @@ import 'package:lance_certo/models/paginated_response.dart';
 import 'package:lance_certo/models/user.dart';
 
 class AuctionService {
-  static const String baseUrl = 'http://127.0.0.1:8080/api/auctions';
+  static String address = dotenv.get('URL');
+  static String baseUrl = 'http://$address/api/auctions';
 
   static String? _getAuthToken() {
     return User.token;
@@ -29,19 +31,8 @@ class AuctionService {
     if (filters != null) {
       queryParams.addAll(filters.toQueryParams());
     }
-
-    /** 
-    final Map<String, Object?> finalQueryParams = queryParams.map((key, value) {
-      if (value is List) {
-        return MapEntry(key, value.map((e) => e.toString()).toList());
-      }
-      return MapEntry(key, value.toString());
-    }).cast<String, Object?>();
-
-    finalQueryParams.forEach((key, value) => print(value.toString()));
-    */
-
-    final uri = Uri.http('127.0.0.1:8080', '/api/auctions', queryParams);
+    final List<String> url = baseUrl.split('/');
+    final uri = Uri.http(url[2], '${url[3]}/${url[4]}', queryParams);
 
     final response = await http.get(
       uri,

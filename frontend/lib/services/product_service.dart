@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:lance_certo/models/product.dart';
 import 'package:lance_certo/models/user.dart';
 
 class ProductService {
-  static const String baseUrl = 'http://127.0.0.1:8080/api/products';
+  static String address = dotenv.get('URL');
+  static String baseUrl = 'http://$address/api/products';
 
   static String? _getAuthToken() {
     return User.token;
