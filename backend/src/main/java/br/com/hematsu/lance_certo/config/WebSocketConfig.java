@@ -46,15 +46,22 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns(allowedOrigins);
+        String[] originPatterns = allowedOrigins.split(",");
+
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns(originPatterns);
     }
 
     @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
+    public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+
+                if (accessor == null) {
+                    return message;
+                }
 
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
 
