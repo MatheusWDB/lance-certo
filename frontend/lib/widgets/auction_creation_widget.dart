@@ -1,12 +1,14 @@
 import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lance_certo/mixins/validations_mixin.dart';
 import 'package:lance_certo/models/auction.dart';
 import 'package:lance_certo/models/product.dart';
 import 'package:lance_certo/models/user.dart';
 import 'package:lance_certo/services/auction_service.dart';
 import 'package:lance_certo/services/product_service.dart';
 import 'package:lance_certo/services/web_socket_service.dart';
+import 'package:lance_certo/utils/responsive.dart';
 import 'package:lance_certo/widgets/product_creaction_widget.dart';
 
 class AuctionCreationWidget extends StatefulWidget {
@@ -16,13 +18,10 @@ class AuctionCreationWidget extends StatefulWidget {
   State<AuctionCreationWidget> createState() => _AuctionCreationWidgetState();
 }
 
-class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
-  late Future<List<Product>> _productsFuture;
-
-  bool _isLoading = false;
-  bool _hasProducts = true;
-  bool _productSelected = false;
-
+class _AuctionCreationWidgetState extends State<AuctionCreationWidget>
+    with ValidationsMixin {
+  final _formKey = GlobalKey<FormState>();
+  final Map<String, String?> _auctionError = {};
   final Map<String, dynamic> _auctionController = {
     'product': null,
     'startTime': TextEditingController(),
@@ -32,16 +31,10 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
     'initialPrice': TextEditingController(),
     'minimunBidIncrement': TextEditingController(),
   };
-
-  final Map<String, String?> _auctionError = {
-    'product': null,
-    'startDate': null,
-    'startTime': null,
-    'endDate': null,
-    'endTime': null,
-    'initialPrice': null,
-    'minimunBidIncrement': null,
-  };
+  late Future<List<Product>> _productsFuture;
+  bool _hasProducts = true;
+  bool _isLoading = false;
+  bool _productSelected = false;
 
   Future<void> _selectDate(BuildContext context, String startOrEnd) async {
     final DateTime? picked = await showDatePicker(
@@ -76,8 +69,6 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
 
     if (picked != null) {
       if (!mounted) return;
-
-      //final bool is24hFormat = MediaQuery.of(context).alwaysUse24HourFormat;
 
       final String formattedHour = picked.hour.toString().padLeft(2, '0');
       final String formattedMinute = picked.minute.toString().padLeft(2, '0');
@@ -114,31 +105,10 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
 
   void _createAuction() async {
     setState(() {
-      _auctionError.clear();
       _isLoading = true;
     });
 
-    bool hasErrors = false;
-
-    if (_auctionController['product'] == null) {
-      _auctionError['product'] = 'Selecione um produto.';
-      hasErrors = true;
-    }
-
-    for (var entry in _auctionController.entries) {
-      final key = entry.key;
-      final value = entry.value;
-
-      // Ignora 'product' (já checado) e garante que é um TextEditingController
-      if (key != 'product' && value is TextEditingController) {
-        if (value.text.isEmpty) {
-          _auctionError[key] = 'Campo obrigatório.';
-          hasErrors = true;
-        }
-      }
-    }
-
-    if (hasErrors) {
+    if (!_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = false;
       });
@@ -193,15 +163,12 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
 
     final DateTime now = DateTime.now();
 
-    //final DateTime today = DateTime(now.year, now.month, now.day);
-
     final DateTime startDateOnly = DateTime(startYear, startMonth, startDay);
     final DateTime endDateOnly = DateTime(endYear, endMonth, endDay);
 
     if (startDateAndTime.isBefore(now)) {
       setState(() {
         _isLoading = false;
-
         _auctionError['startTime'] = 'Hora de início tem quer ser no futuro.';
       });
 
@@ -283,10 +250,6 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
           '',
         );
 
-        setState(() {
-          _auctionError['product'] = cleanMessage;
-        });
-
         AlertInfo.show(
           context: context,
           text: cleanMessage,
@@ -294,6 +257,147 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
         );
       }
     }
+  }
+
+  List<Widget> _buildButtomsCotent() {
+    return [
+      ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 22, 163, 74),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        onPressed: () => showModalBottomSheet(
+          context: context,
+          builder: (context) => ProductCreationWidget(
+            onProductCreated: () => setState(() {
+              _fetchAllProducts();
+            }),
+          ),
+        ),
+        child: const Text('Criar Produto'),
+      ),
+      FutureBuilder(
+        future: _productsFuture,
+        builder: (context, snapshot) {
+          _hasProducts = true;
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            _hasProducts = false;
+          }
+
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 37, 99, 235),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onPressed: _hasProducts ? _createAuction : null,
+            child: const Text('Cadastrar Leilão'),
+          );
+        },
+      ),
+    ];
+  }
+
+  List<Widget> _buildStartDateFieldContent(double fontSizeHintText) {
+    return [
+      const Text('Data de Início:'),
+      TextFormField(
+        controller: _auctionController['startDate'],
+        readOnly: true,
+        onTap: () => _selectDate(context, 'start'),
+        style: TextStyle(fontSize: fontSizeHintText),
+        decoration: InputDecoration(
+          hintText: 'dd/mm/aaaa',
+          suffixIcon: const Icon(Icons.calendar_month),
+          errorText: _auctionError['startDate'],
+          errorMaxLines: 2,
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+          ),
+          hintStyle: TextStyle(fontSize: fontSizeHintText),
+        ),
+        validator: (value) => combine([() => isNotEmpty(value)]),
+      ),
+    ];
+  }
+
+  List<Widget> _buildStartTimeFieldContent(double fontSizeHintText) {
+    return [
+      const Text('Hora de Início:'),
+      TextFormField(
+        controller: _auctionController['startTime'],
+        readOnly: true,
+        onTap: () => _selectTime('start'),
+        style: TextStyle(fontSize: fontSizeHintText),
+        decoration: InputDecoration(
+          hintText: '--:--',
+          suffixIcon: const Icon(Icons.access_time),
+          errorText: _auctionError['startTime'],
+          errorMaxLines: 2,
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+          ),
+          hintStyle: TextStyle(fontSize: fontSizeHintText),
+        ),
+        validator: (value) => combine([() => isNotEmpty(value)]),
+      ),
+    ];
+  }
+
+  List<Widget> _buildEndDateFieldContent(double fontSizeHintText) {
+    return [
+      const Text('Data de Término:'),
+      TextFormField(
+        controller: _auctionController['endDate'],
+        readOnly: true,
+        onTap: () => _selectDate(context, 'end'),
+        style: TextStyle(fontSize: fontSizeHintText),
+        decoration: InputDecoration(
+          hintText: 'dd/mm/aaaa',
+          suffixIcon: const Icon(Icons.calendar_month),
+          errorText: _auctionError['endDate'],
+          errorMaxLines: 2,
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+          ),
+          hintStyle: TextStyle(fontSize: fontSizeHintText),
+        ),
+        validator: (value) => combine([() => isNotEmpty(value)]),
+      ),
+    ];
+  }
+
+  List<Widget> _buildEndTimeFieldContent(double fontSizeHintText) {
+    return [
+      const Text('Hora de Término:'),
+      TextFormField(
+        controller: _auctionController['endTime'],
+        readOnly: true,
+        onTap: () => _selectTime('end'),
+        style: TextStyle(fontSize: fontSizeHintText),
+        decoration: InputDecoration(
+          hintText: '--:--',
+          suffixIcon: const Icon(Icons.access_time),
+          errorText: _auctionError['endTime'],
+          errorMaxLines: 2,
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+          ),
+          hintStyle: TextStyle(fontSize: fontSizeHintText),
+        ),
+        validator: (value) => combine([() => isNotEmpty(value)]),
+      ),
+    ];
   }
 
   @override
@@ -312,312 +416,228 @@ class _AuctionCreationWidgetState extends State<AuctionCreationWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 16.0,
-            children: [
-              const Text(
-                'Cadastrar Novo Leilão',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
-              ),
-              const Text('Selecione o Produto:', textAlign: TextAlign.start),
-              FutureBuilder(
-                future: _productsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    debugPrint('Erro: ${snapshot.error}');
-                    return Center(child: Text('Erro: ${snapshot.error}'));
-                  } else {
-                    final products = snapshot.data!;
+    final fontSizeTitle = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 24.0,
+      sm: 32.0,
+    );
 
-                    return DropdownMenu<Product>(
-                      enabled: snapshot.hasData && snapshot.data!.isNotEmpty
-                          ? true
-                          : false,
-                      width: double.infinity,
-                      menuHeight: MediaQuery.of(context).size.height * 0.4,
-                      label: Text(
-                        !snapshot.hasData || snapshot.data!.isEmpty
-                            ? 'Nenhum produto encontrado.'
-                            : _productSelected
-                            ? ''
-                            : 'Nenhum produto selecionado.',
+    final fontSizeHintText = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 16.0,
+    );
+
+    return SafeArea(
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: SingleChildScrollView(
+              reverse: true,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 8.0,
+                  children: [
+                    Text(
+                      'Cadastrar Novo Leilão',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: fontSizeTitle,
                       ),
-                      errorText: _auctionError['product'],
-                      dropdownMenuEntries: products
-                          .map(
-                            (e) => DropdownMenuEntry(value: e, label: e.name),
-                          )
-                          .toList(),
-                      onSelected: (value) {
-                        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                          setState(() {
-                            _auctionError['product'] = null;
-                            _auctionController['product'] = value;
-                            _productSelected = true;
-                          });
+                    ),
+                    const Text(
+                      'Selecione o Produto:',
+                      textAlign: TextAlign.start,
+                    ),
+                    FutureBuilder(
+                      future: _productsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (snapshot.hasError) {
+                          debugPrint('Erro: ${snapshot.error}');
+                          return Center(child: Text('Erro: ${snapshot.error}'));
+                        } else {
+                          final products = snapshot.data!;
+
+                          return DropdownMenu<Product>(
+                            enabled:
+                                snapshot.hasData && snapshot.data!.isNotEmpty
+                                ? true
+                                : false,
+                            width: double.infinity,
+                            menuHeight:
+                                MediaQuery.of(context).size.height * 0.4,
+                            label: Text(
+                              !snapshot.hasData || snapshot.data!.isEmpty
+                                  ? 'Nenhum produto encontrado.'
+                                  : _productSelected
+                                  ? ''
+                                  : 'Nenhum produto selecionado.',
+                              style: TextStyle(fontSize: fontSizeHintText),
+                            ),
+                            errorText: _auctionError['product'],
+                            onSelected: (value) {
+                              if (snapshot.hasData &&
+                                  snapshot.data!.isNotEmpty) {
+                                setState(() {
+                                  _auctionError['product'] = null;
+                                  _auctionController['product'] = value;
+                                  _productSelected = true;
+                                });
+                              }
+                            },
+                            dropdownMenuEntries: products
+                                .map(
+                                  (e) => DropdownMenuEntry(
+                                    value: e,
+                                    label: e.name,
+                                  ),
+                                )
+                                .toList(),
+                          );
                         }
                       },
-                    );
-                  }
-                },
-              ),
-              Column(
-                spacing: 6.0,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Preço Inicial (R\$):',
-                    textAlign: TextAlign.start,
-                  ),
-                  TextField(
-                    controller: _auctionController['initialPrice'],
-                    decoration: InputDecoration(
-                      label: const Text('Ex: 100,00'),
-                      errorText: _auctionError['initialPrice'],
-                      errorMaxLines: 2,
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(6)),
-                      ),
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _auctionError['initialPrice'] = null;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              Column(
-                spacing: 6.0,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text('Incremento Mínimo (R\$):'),
-                  TextField(
-                    controller: _auctionController['minimunBidIncrement'],
-                    decoration: InputDecoration(
-                      label: const Text('Ex: 100,00'),
-                      errorText: _auctionError['minimunBidIncrement'],
-                      errorMaxLines: 2,
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(6)),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _auctionError['minimunBidIncrement'] = null;
-                      });
-                    },
-                  ),
-                ],
-              ),
-
-              Row(
-                spacing: 16,
-                children: [
-                  Expanded(
-                    child: Column(
+                    Column(
                       spacing: 6.0,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text('Data de Início:'),
-                        TextField(
-                          controller: _auctionController['startDate'],
-                          readOnly: true,
-                          onTap: () => _selectDate(context, 'start'),
+                        const Text(
+                          'Preço Inicial (R\$):',
+                          textAlign: TextAlign.start,
+                        ),
+                        TextFormField(
+                          controller: _auctionController['initialPrice'],
                           decoration: InputDecoration(
-                            label: const Text('dd/mm/aaaa'),
-                            suffixIcon: const Icon(Icons.calendar_month),
-                            errorText: _auctionError['startDate'],
+                            hintText: 'Ex: 100,00',
                             errorMaxLines: 2,
                             border: const OutlineInputBorder(
                               borderRadius: BorderRadius.all(
                                 Radius.circular(6),
                               ),
                             ),
+                            hintStyle: TextStyle(fontSize: fontSizeHintText),
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              _auctionError['startDate'] = null;
-                            });
-                          },
+                          validator: (value) => combine([
+                            () => isNotEmpty(value),
+                            () => isNumber(value),
+                          ]),
                         ),
                       ],
                     ),
-                  ),
-                  Expanded(
-                    child: Column(
+                    Column(
                       spacing: 6.0,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text('Hora de Início:'),
-                        TextField(
-                          controller: _auctionController['startTime'],
-                          readOnly: true,
-                          onTap: () => _selectTime('start'),
+                        const Text('Incremento Mínimo (R\$):'),
+                        TextFormField(
+                          controller: _auctionController['minimunBidIncrement'],
                           decoration: InputDecoration(
-                            label: const Text('--:--'),
-                            suffixIcon: const Icon(Icons.access_time),
-                            errorText: _auctionError['startTime'],
+                            hintText: 'Ex: 100,00',
                             errorMaxLines: 2,
                             border: const OutlineInputBorder(
                               borderRadius: BorderRadius.all(
                                 Radius.circular(6),
                               ),
                             ),
+                            hintStyle: TextStyle(fontSize: fontSizeHintText),
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              _auctionError['startTime'] = null;
-                            });
-                          },
+                          validator: (value) => combine([
+                            () => isNotEmpty(value),
+                            () => isNumber(value),
+                          ]),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                spacing: 16,
-                children: [
-                  Expanded(
-                    child: Column(
-                      spacing: 6.0,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Data de Término:'),
-                        TextField(
-                          controller: _auctionController['endDate'],
-                          readOnly: true,
-                          onTap: () => _selectDate(context, 'end'),
-                          decoration: InputDecoration(
-                            label: const Text('dd/mm/aaaa'),
-                            suffixIcon: const Icon(Icons.calendar_month),
-                            errorText: _auctionError['endDate'],
-                            errorMaxLines: 2,
-                            border: const OutlineInputBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(6),
-                              ),
+                    ...Responsive.isExtraSmall(context)
+                        ? [
+                            ..._buildStartDateFieldContent(fontSizeHintText),
+                            ..._buildStartTimeFieldContent(fontSizeHintText),
+                            ..._buildEndDateFieldContent(fontSizeHintText),
+                            ..._buildEndTimeFieldContent(fontSizeHintText),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: _buildButtomsCotent(),
                             ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _auctionError['endDate'] = null;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      spacing: 6.0,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Hora de Término:'),
-                        TextField(
-                          controller: _auctionController['endTime'],
-                          readOnly: true,
-                          onTap: () => _selectTime('end'),
-                          decoration: InputDecoration(
-                            label: const Text('--:--'),
-                            suffixIcon: const Icon(Icons.access_time),
-                            errorText: _auctionError['endTime'],
-                            errorMaxLines: 2,
-                            border: const OutlineInputBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(6),
-                              ),
+                          ]
+                        : [
+                            Row(
+                              spacing: 16.0,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    spacing: 6.0,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: _buildStartDateFieldContent(
+                                      fontSizeHintText,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    spacing: 6.0,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: _buildStartTimeFieldContent(
+                                      fontSizeHintText,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _auctionError['endTime'] = null;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                            Row(
+                              spacing: 16.0,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    spacing: 6.0,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: _buildEndDateFieldContent(
+                                      fontSizeHintText,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    spacing: 6.0,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: _buildEndTimeFieldContent(
+                                      fontSizeHintText,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: _buildButtomsCotent(),
+                            ),
+                          ],
+                  ],
+                ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 22, 163, 74),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onPressed: () => showModalBottomSheet(
-                      context: context,
-                      builder: (context) => ProductCreationWidget(
-                        onProductCreated: () => setState(() {
-                          _fetchAllProducts();
-                        }),
-                      ),
-                    ),
-                    child: const Text('Criar Produto'),
-                  ),
-                  FutureBuilder(
-                    future: _productsFuture,
-                    builder: (context, snapshot) {
-                      _hasProducts = true;
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        _hasProducts = false;
-                      }
-
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            37,
-                            99,
-                            235,
-                          ),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        onPressed: _hasProducts ? _createAuction : null,
-                        child: const Text('Cadastrar Leilão'),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-        if (_isLoading) ...[
-          ModalBarrier(
-            dismissible: false,
-            color: Colors.black.withValues(alpha: 0.4),
-          ),
-          const Center(child: CircularProgressIndicator()),
+          if (_isLoading) ...[
+            ModalBarrier(
+              dismissible: false,
+              color: Colors.black.withValues(alpha: 0.4),
+            ),
+            const Center(child: CircularProgressIndicator()),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

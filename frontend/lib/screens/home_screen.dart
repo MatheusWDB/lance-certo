@@ -11,8 +11,9 @@ import 'package:lance_certo/models/user.dart';
 import 'package:lance_certo/models/user_role.dart';
 import 'package:lance_certo/services/auction_service.dart';
 import 'package:lance_certo/services/web_socket_service.dart';
+import 'package:lance_certo/utils/responsive.dart';
 import 'package:lance_certo/widgets/auction_creation_widget.dart';
-import 'package:lance_certo/widgets/auction_list_widget.dart';
+import 'package:lance_certo/widgets/auction_list_item_widget.dart';
 import 'package:lance_certo/widgets/main_menu_widget.dart';
 import 'package:lance_certo/mixins/web_socket_notifier_mixin.dart';
 
@@ -25,18 +26,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with WebSocketNotifierMixin<HomeScreen> {
-  late Future<PaginatedResponse<Auction>> _auctionsFuture;
-
-  final Pageable _pagination = Pageable(page: 0, size: 6);
-  int _totalPages = 1;
-
   final Map<String, TextEditingController> _filterTextController = {};
   final TextEditingController _selectedFilterMenuController =
       TextEditingController(text: AuctionFilterParamsEnum.all.displayName);
   final TextEditingController _sortMenuControllerSelected =
       TextEditingController(text: AuctionSortOptionsEnum.none.displayName);
+  final Pageable _pagination = Pageable(page: 0, size: 6);
+  late Future<PaginatedResponse<Auction>> _auctionsFuture;
   bool _isAscendingOrder = true;
   String _oldSortMenuSelected = AuctionSortOptionsEnum.none.displayName;
+  int _totalPages = 1;
   String? _keyController;
 
   void _fetchAuctionsWithPagination() async {
@@ -166,34 +165,78 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final firstContainerPadding = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 0.0,
+      md: 30.0,
+    );
+
+    final secondContainerBorderRadius = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 0.0,
+      md: 8.0,
+    );
+
+    final fontSizeTitle = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 20.0,
+      sm: 30.0,
+      md: 35.0,
+    );
+
+    final fontSizeButtom = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 15.0,
+      md: 16.0,
+    );
+
+    final widthButtom = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 100.0,
+      sm: 150.0,
+    );
+
+    final heightButtom = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 16.0,
+      sm: 50.0,
+    );
+
+    final paddingButtom = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 0.0,
+    );
+
     return Scaffold(
       body: SafeArea(
         child: Container(
+          padding: EdgeInsets.all(firstContainerPadding),
           decoration: const BoxDecoration(
             color: Color.fromARGB(255, 243, 244, 246),
           ),
           child: Center(
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.87,
-              padding: const EdgeInsets.all(32.0),
-              margin: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(24.0),
+              constraints: const BoxConstraints(maxWidth: Responsive.xxl * .9),
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(
+                  secondContainerBorderRadius,
+                ),
               ),
               child: Column(
                 spacing: 8.0,
                 children: [
                   const MainMenuWidget(currentRoute: '/home'),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      const Flexible(
+                      Flexible(
                         child: Text(
                           'Leilões Ativos',
                           style: TextStyle(
-                            fontSize: 37,
+                            fontSize: fontSizeTitle,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -205,6 +248,7 @@ class _HomeScreenState extends State<HomeScreen>
                           children: [
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.all(paddingButtom),
                                 backgroundColor: const Color.fromARGB(
                                   255,
                                   22,
@@ -212,15 +256,12 @@ class _HomeScreenState extends State<HomeScreen>
                                   74,
                                 ),
                                 foregroundColor: Colors.white,
-                                fixedSize: Size(
-                                  MediaQuery.of(context).size.width * 0.133,
-                                  50,
-                                ),
+                                fixedSize: Size(widthButtom, heightButtom),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
-                                textStyle: const TextStyle(
-                                  fontSize: 16,
+                                textStyle: TextStyle(
+                                  fontSize: fontSizeButtom,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -235,154 +276,170 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          spacing: 16.0,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Filtrar por:'),
-                                DropdownMenu<AuctionFilterParamsEnum>(
-                                  controller: _selectedFilterMenuController,
-                                  enableSearch: false,
-                                  enableFilter: true,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.226,
-                                  menuHeight:
-                                      MediaQuery.of(context).size.height * 0.3,
-                                  textStyle: const TextStyle(fontSize: 14.0),
-                                  onSelected: (value) {
-                                    if (value == null) return;
+                  if (!Responsive.isExtraSmall(context) &&
+                      !Responsive.isSmall(context))
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            spacing: 16.0,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Filtrar por:'),
+                                  DropdownMenu<AuctionFilterParamsEnum>(
+                                    controller: _selectedFilterMenuController,
+                                    enableSearch: false,
+                                    enableFilter: true,
+                                    width:
+                                        MediaQuery.of(context).size.width *
+                                        0.226,
+                                    menuHeight:
+                                        MediaQuery.of(context).size.height *
+                                        0.3,
+                                    textStyle: const TextStyle(fontSize: 14.0),
+                                    onSelected: (value) {
+                                      if (value == null) return;
 
-                                    if (_keyController != value.name) {
-                                      _filterTextController[_keyController]
-                                          ?.clear();
-                                    }
-
-                                    setState(() {
-                                      _keyController = value.name;
-
-                                      if (!_filterTextControllerIsEmpty()) {
-                                        _pagination.page = 0;
-                                        _fetchAuctionsWithPagination();
+                                      if (_keyController != value.name) {
+                                        _filterTextController[_keyController]
+                                            ?.clear();
                                       }
-                                    });
-                                  },
-                                  dropdownMenuEntries: AuctionFilterParamsEnum
-                                      .values
-                                      .map(
-                                        (e) => DropdownMenuEntry(
-                                          value: e,
-                                          label: e.displayName,
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Buscar Termo:'),
-                                TextField(
-                                  enabled:
-                                      _selectedFilterMenuController.text !=
-                                          'Tudo'
-                                      ? true
-                                      : false,
-                                  controller:
-                                      _filterTextController[_keyController],
-                                  onChanged: (value) {
-                                    if (_selectedFilterMenuController.text !=
-                                        'Tudo') {
+
                                       setState(() {
-                                        _pagination.page = 0;
-                                        _fetchAuctionsWithPagination();
+                                        _keyController = value.name;
+
+                                        if (!_filterTextControllerIsEmpty()) {
+                                          _pagination.page = 0;
+                                          _fetchAuctionsWithPagination();
+                                        }
                                       });
-                                    }
-                                  },
-                                  decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.all(10.0),
-                                    border: const OutlineInputBorder(),
-                                    hint: const Text(
-                                      'Buscar leilões...',
-                                      style: TextStyle(color: Colors.grey),
-                                    ),
-                                    constraints: BoxConstraints(
-                                      maxWidth:
-                                          MediaQuery.of(context).size.width *
-                                          0.196,
+                                    },
+                                    dropdownMenuEntries: AuctionFilterParamsEnum
+                                        .values
+                                        .map(
+                                          (e) => DropdownMenuEntry(
+                                            value: e,
+                                            label: e.displayName,
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Buscar Termo:'),
+                                  TextField(
+                                    enabled:
+                                        _selectedFilterMenuController.text !=
+                                            'Tudo'
+                                        ? true
+                                        : false,
+                                    controller:
+                                        _filterTextController[_keyController],
+                                    onChanged: (value) {
+                                      if (_selectedFilterMenuController.text !=
+                                          'Tudo') {
+                                        setState(() {
+                                          _pagination.page = 0;
+                                          _fetchAuctionsWithPagination();
+                                        });
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 10.0, vertical: 16.0
+                                      ),
+                                      border: const OutlineInputBorder(),
+                                      hint: const Text(
+                                        'Buscar leilões...',
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                      constraints: BoxConstraints(
+                                        maxWidth:
+                                            MediaQuery.of(context).size.width *
+                                            0.196,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Ordernar por:'),
-                            DropdownMenu<AuctionSortOptionsEnum>(
-                              controller: _sortMenuControllerSelected,
-                              textStyle: const TextStyle(fontSize: 14.0),
-                              width: MediaQuery.of(context).size.width * 0.188,
-                              menuHeight:
-                                  MediaQuery.of(context).size.height * 0.3,
-                              leadingIcon: Icon(
-                                _sortMenuControllerSelected.text !=
-                                        AuctionSortOptionsEnum.none.displayName
-                                    ? _isAscendingOrder
-                                          ? Icons.arrow_upward
-                                          : Icons.arrow_downward
-                                    : Icons.sort,
-                                color: const Color.fromARGB(255, 59, 130, 246),
+                                ],
                               ),
-                              onSelected: (value) {
-                                if (value == null) return;
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Ordernar por:'),
+                              DropdownMenu<AuctionSortOptionsEnum>(
+                                controller: _sortMenuControllerSelected,
+                                textStyle: const TextStyle(fontSize: 14.0),
+                                width: MediaQuery.of(context).size.width * 0.25,
+                                menuHeight:
+                                    MediaQuery.of(context).size.height * 0.3,
+                                leadingIcon: Icon(
+                                  fill: 0.5,
+                                  _sortMenuControllerSelected.text !=
+                                          AuctionSortOptionsEnum
+                                              .none
+                                              .displayName
+                                      ? _isAscendingOrder
+                                            ? Icons.arrow_upward
+                                            : Icons.arrow_downward
+                                      : Icons.sort,
+                                  color: const Color.fromARGB(
+                                    255,
+                                    59,
+                                    130,
+                                    246,
+                                  ),
+                                ),
+                                onSelected: (value) {
+                                  if (value == null) return;
 
-                                setState(() {
-                                  _pagination.page = 0;
-                                  _pagination.sort = null;
+                                  setState(() {
+                                    _pagination.page = 0;
+                                    _pagination.sort = null;
 
-                                  if (value != AuctionSortOptionsEnum.none) {
-                                    value.displayName == _oldSortMenuSelected
-                                        ? _isAscendingOrder = !_isAscendingOrder
-                                        : _isAscendingOrder = true;
+                                    if (value != AuctionSortOptionsEnum.none) {
+                                      value.displayName == _oldSortMenuSelected
+                                          ? _isAscendingOrder =
+                                                !_isAscendingOrder
+                                          : _isAscendingOrder = true;
 
-                                    _pagination.sort = [
-                                      '${value.name},${_isAscendingOrder ? 'asc' : 'desc'}',
-                                    ];
-                                  }
+                                      _pagination.sort = [
+                                        '${value.name},${_isAscendingOrder ? 'asc' : 'desc'}',
+                                      ];
+                                    }
 
-                                  _fetchAuctionsWithPagination();
+                                    _fetchAuctionsWithPagination();
 
-                                  _oldSortMenuSelected = value.displayName;
-                                });
-                              },
-                              dropdownMenuEntries: AuctionSortOptionsEnum.values
-                                  .map(
-                                    (e) => DropdownMenuEntry(
-                                      value: e,
-                                      label: e.displayName,
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                          ],
-                        ),
-                      ],
+                                    _oldSortMenuSelected = value.displayName;
+                                  });
+                                },
+                                dropdownMenuEntries: AuctionSortOptionsEnum
+                                    .values
+                                    .map(
+                                      (e) => DropdownMenuEntry(
+                                        value: e,
+                                        label: e.displayName,
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   const Divider(color: Colors.grey),
                   Flexible(
                     child: FutureBuilder<PaginatedResponse<Auction>>(
@@ -419,30 +476,76 @@ class _HomeScreenState extends State<HomeScreen>
                               )
                               .toList();
 
-                          return RefreshIndicator(
-                            onRefresh: _refreshAuctions,
-                            child: GridView.builder(
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    mainAxisExtent: 365,
-                                    crossAxisSpacing: 10,
-                                    mainAxisSpacing: 10,
-                                  ),
-                              itemCount: auctions.length,
-                              itemBuilder: (context, index) {
-                                final auction = auctions[index];
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              final double totalWidth = constraints.maxWidth;
 
-                                return AuctionListWidget(
-                                  auction: auction,
-                                  updateList: () async {
-                                    setState(() {
-                                      _fetchAuctionsWithPagination();
-                                    });
-                                  },
-                                );
-                              },
-                            ),
+                              final heightLimit =
+                                  Responsive.valueForBreakpoints(
+                                    context: context,
+                                    xs: 375.0,
+                                    md: 355.0,
+                                  );
+
+                              final double widthLimit =
+                                  Responsive.valueForBreakpoints(
+                                    context: context,
+                                    xs: 320.0,
+                                  );
+
+                              const double minSpacing = 6.0;
+                              const double maxSpacing = 50.0;
+
+                              final int numberOfCollums =
+                                  (totalWidth / widthLimit).floor();
+
+                              double calculatedSpacing =
+                                  (totalWidth -
+                                      (numberOfCollums * widthLimit)) /
+                                  (numberOfCollums - 1);
+
+                              if (calculatedSpacing > maxSpacing) {
+                                calculatedSpacing = maxSpacing;
+                              }
+                              if (calculatedSpacing < minSpacing) {
+                                calculatedSpacing = minSpacing;
+                              }
+                              if (numberOfCollums < 2) calculatedSpacing = 0.0;
+
+                              debugPrint('totalWidth=$totalWidth');
+                              debugPrint('numberOfCollums=$numberOfCollums');
+                              debugPrint(
+                                'calculatedSpacing=$calculatedSpacing',
+                              );
+
+                              return RefreshIndicator(
+                                onRefresh: _refreshAuctions,
+                                child: SingleChildScrollView(
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: Wrap(
+                                      spacing: calculatedSpacing,
+                                      runSpacing: 10.0,
+                                      alignment: WrapAlignment.center,
+                                      children: auctions.map((auction) {
+                                        return SizedBox(
+                                          width: widthLimit,
+                                          height: heightLimit,
+                                          child: AuctionListItemWidget(
+                                            auction: auction,
+                                            updateList: () async {
+                                              setState(() {
+                                                _fetchAuctionsWithPagination();
+                                              });
+                                            },
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         }
                       },

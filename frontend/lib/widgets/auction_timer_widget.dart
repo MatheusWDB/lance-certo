@@ -16,9 +16,9 @@ class AuctionTimerWidget extends StatefulWidget {
 }
 
 class _AuctionTimerWidgetState extends State<AuctionTimerWidget> {
+  bool _isActive = true;
   Timer? _timer;
   Duration _timeRemaining = Duration.zero;
-  bool isActive = true;
 
   void _calculateAndUpdateTime() async {
     final now = DateTime.now();
@@ -39,8 +39,8 @@ class _AuctionTimerWidgetState extends State<AuctionTimerWidget> {
 
     if (mounted) {
       setState(() {
-        if (timerExpired && isActive) {
-          isActive = false;
+        if (timerExpired && _isActive) {
+          _isActive = false;
         }
       });
     }
@@ -89,11 +89,11 @@ class _AuctionTimerWidgetState extends State<AuctionTimerWidget> {
   @override
   Widget build(BuildContext context) {
     return Text(
-      isActive == true ? _formatDuration(_timeRemaining) : 'Leilão Encerrado.',
+      _isActive == true ? _formatDuration(_timeRemaining) : 'Leilão Encerrado.',
       style: TextStyle(
         fontWeight: FontWeight.bold,
-        fontSize: 16,
-        color: isActive == true
+        fontSize: 16.0,
+        color: _isActive == true
             ? const Color(0xFF374151)
             : const Color(0xFFDC2626),
       ),

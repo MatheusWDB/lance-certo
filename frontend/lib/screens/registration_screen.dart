@@ -1,5 +1,6 @@
 import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
+import 'package:lance_certo/mixins/validations_mixin.dart';
 import 'package:lance_certo/models/user.dart';
 import 'package:lance_certo/models/user_role.dart';
 import 'package:lance_certo/services/user_service.dart';
@@ -11,180 +12,41 @@ class RegistrationScreen extends StatefulWidget {
   State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
-  bool _isLoading = false;
-
-  Map<String, TextEditingController> controller = {
+class _RegistrationScreenState extends State<RegistrationScreen>
+    with ValidationsMixin {
+  final _formKey = GlobalKey<FormState>();
+  final Map<String, TextEditingController> _controller = {
     'name': TextEditingController(),
     'username': TextEditingController(),
     'email': TextEditingController(),
     'phone': TextEditingController(),
     'password': TextEditingController(),
     'confirmPassword': TextEditingController(),
-    'role': TextEditingController(),
   };
-  Map<String, String?> error = {
-    'name': null,
-    'username': null,
-    'email': null,
-    'phone': null,
-    'password': null,
-    'confirmPassword': null,
-    'role': null,
-  };
+  bool _isLoading = false;
+  bool _viewConfirmPassword = false;
+  bool _viewPassword = false;
 
-  bool viewPassword = false;
-  bool viewConfirmPassword = false;
-
-  void _chooseTheRole() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            bool roleSelected = false;
-
-            if (controller['role']!.text.isNotEmpty) {
-              roleSelected = true;
-            }
-
-            return Dialog(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  spacing: 8.0,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Escolha o tipo de conta'),
-                    DropdownMenu(
-                      //label: Text(roleSelected ? label! : ''),
-                      controller: controller['role'],
-                      errorText: error['role'],
-                      onSelected: (value) {
-                        setDialogState(() {
-                          roleSelected = true;
-
-                          if (error['role'] != null) {
-                            error['role'] = null;
-                          }
-                        });
-                      },
-                      dropdownMenuEntries: UserRole.values
-                          .where((element) => element != UserRole.ADMIN)
-                          .map((e) {
-                            return DropdownMenuEntry(
-                              label: e.displayName,
-                              value: e,
-                            );
-                          })
-                          .toList(),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 52.0,
-                          vertical: 16.0,
-                        ),
-                        backgroundColor: const Color(0xFF16A34A),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      onPressed: roleSelected
-                          ? () {
-                              register();
-                              Navigator.of(context).pop();
-                            }
-                          : null,
-
-                      child: const Text('Registrar'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void register() async {
+  void _register() async {
     setState(() {
       _isLoading = true;
     });
 
-    bool hasErrors = false;
-
-    final attributes = [
-      'name',
-      'username',
-      'email',
-      'phone',
-      'password',
-      'confirmPassword',
-    ];
-
-    for (var attribute in attributes) {
-      if (controller[attribute]!.text.isEmpty) {
-        error[attribute] = 'Campo obrigatório.';
-        hasErrors = true;
-      }
-    }
-
-    if (hasErrors) {
-      setState(() {
-        _isLoading = false;
-      });
+    if (!_formKey.currentState!.validate()) {
+      _isLoading = false;
       return;
     }
 
-    if (!controller['email']!.text.contains('@') ||
-        !controller['email']!.text.contains('.')) {
-      final int atIndex = controller['email']!.text.indexOf('@');
-      final int dotIndex = controller['email']!.text.lastIndexOf('.');
-      if (atIndex < 1 ||
-          dotIndex < atIndex + 2 ||
-          dotIndex == controller['email']!.text.length - 1) {
-        setState(() {
-          error['email'] = 'Inválido';
-          _isLoading = false;
-        });
-        return;
-      }
-    }
-
-    if (controller['password']!.text.length < 8) {
-      setState(() {
-        error['password'] = 'A senha tem no mínimo 8 caracteres';
-        _isLoading = false;
-      });
-      return;
-    }
-
-    if (controller['password']!.text != controller['confirmPassword']!.text) {
-      setState(() {
-        error['password'] = 'As senha não coincidem!';
-        error['confirmPassword'] = 'As senha não coincidem!';
-        _isLoading = false;
-      });
-      return;
-    }
-
-    final User newUser = User(
-      name: controller['name']!.text,
-      username: controller['username']!.text,
-      email: controller['email']!.text,
-      phone: controller['phone']!.text,
+    final newUser = User(
+      name: _controller['name']!.text,
+      username: _controller['email']!.text,
+      email: _controller['email']!.text,
+      phone: _controller['phone']!.text,
+      role: UserRole.SELLER,
     );
 
     try {
-      await UserService.registerUser(newUser, controller['password']!.text);
-
-      resetController();
-      resetError();
+      await UserService.registerUser(newUser, _controller['password']!.text);
 
       if (!mounted) return;
 
@@ -215,26 +77,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
   }
 
-  void resetController() {
-    setState(() {
-      controller['username']?.clear();
-      controller['password']?.clear();
-      controller['name']?.clear();
-      controller['confirmPassword']?.clear();
-    });
-  }
-
-  void resetError() {
-    setState(() {
-      error['name'] = null;
-      error['confirmPassword'] = null;
-      error['username'] = null;
-      error['password'] = null;
-    });
+  @override
+  void dispose() {
+    _controller.forEach((key, value) => value.dispose());
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    const textFormFieldMaxWidth = 300.0;
+    const textFormFieldBorderRadius = 10.0;
+
+    const hintTextColor = Colors.grey;
+
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -243,207 +100,265 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               decoration: const BoxDecoration(color: Color(0xFFE2E8F0)),
               child: Center(
                 child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.376,
+                  width: width * .9,
+                  constraints: const BoxConstraints(
+                    maxWidth: 450.0,
+                    maxHeight: 770.0,
                   ),
-                  height: MediaQuery.of(context).size.height * 0.894,
-                  padding: const EdgeInsets.all(32.0),
-                  margin: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8.0),
                     border: Border.all(color: Colors.grey),
                     boxShadow: const [BoxShadow(blurRadius: 10.0)],
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 20.0,
-                    children: [
-                      const Text(
-                        'Bem-vindo ao Lance Certo',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 32.0,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const Text(
-                        'Registrar',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 24.0,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      TextField(
-                        autofocus: true,
-                        controller: controller['name'],
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          errorText: error['name'],
-                          labelText: 'Nome',
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            error['name'] = null;
-                          });
-                        },
-                      ),
-                      TextField(
-                        controller: controller['username'],
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          errorText: error['username'],
-                          labelText: 'Username',
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            error['username'] = null;
-                          });
-                        },
-                      ),
-                      TextField(
-                        controller: controller['email'],
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          errorText: error['username'],
-                          labelText: 'Email',
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            error['username'] = null;
-                          });
-                        },
-                      ),
-                      TextField(
-                        controller: controller['phone'],
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          errorText: error['username'],
-                          labelText: 'Telefone',
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            error['username'] = null;
-                          });
-                        },
-                      ),
-                      TextField(
-                        autocorrect: false,
-                        controller: controller['password'],
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          errorText: error['password'],
-                          labelText: 'Senha',
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                viewPassword = !viewPassword;
-                              });
-                            },
-                            icon: Icon(
-                              viewPassword == true
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
-                          ),
-                        ),
-                        obscureText: !viewPassword,
-                        obscuringCharacter: '*',
-                        onChanged: (value) {
-                          setState(() {
-                            error['password'] = null;
-                          });
-                        },
-                      ),
-                      TextField(
-                        autocorrect: false,
-                        controller: controller['confirmPassword'],
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          errorText: error['confirmPassword'],
-                          labelText: 'Confirme a senha',
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                viewConfirmPassword = !viewConfirmPassword;
-                              });
-                            },
-                            icon: Icon(
-                              viewConfirmPassword == true
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
-                          ),
-                        ),
-                        obscureText: !viewConfirmPassword,
-                        obscuringCharacter: '*',
-                        onChanged: (value) {
-                          setState(() {
-                            error['password'] = null;
-                          });
-                        },
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 52.0,
-                            vertical: 16.0,
-                          ),
-                          backgroundColor: const Color(0xFF16A34A),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                        ),
-                        onPressed: () => _chooseTheRole(),
-                        child: const Text(
-                          'Registrar',
+                  child: SingleChildScrollView(
+                    reverse: true,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      spacing: 20.0,
+                      children: [
+                        const Text(
+                          'Bem-vindo ao Lance Certo',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 16.0,
+                            fontSize: 32.0,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const Text(
+                          'Registrar',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24.0,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Já tem uma conta?'),
-                          TextButton(
-                            onPressed: () {
-                              resetController();
-                              resetError();
-                              Navigator.pop(context);
-                            },
-                            child: const Text(
-                              'Faça login.',
-                              style: TextStyle(
-                                color: Color(0xFF2563EB),
-                                fontWeight: FontWeight.w600,
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            spacing: 8.0,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Nome:'),
+                                  TextFormField(
+                                    autofocus: true,
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    controller: _controller['name'],
+                                    decoration: InputDecoration(
+                                      hintText: 'João Maria',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          textFormFieldBorderRadius,
+                                        ),
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        maxWidth: textFormFieldMaxWidth,
+                                      ),
+                                      hintStyle: const TextStyle(
+                                        color: hintTextColor,
+                                      ),
+                                    ),
+                                    validator: (value) => isNotEmpty(value),
+                                  ),
+                                ],
                               ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Email:'),
+                                  TextFormField(
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    controller: _controller['email'],
+                                    decoration: InputDecoration(
+                                      hintText: 'email@gmail.com',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          textFormFieldBorderRadius,
+                                        ),
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        maxWidth: textFormFieldMaxWidth,
+                                      ),
+                                      hintStyle: const TextStyle(
+                                        color: hintTextColor,
+                                      ),
+                                    ),
+                                    validator: (value) => combine([
+                                      () => isNotEmpty(value),
+                                      () => isValidEmail(value),
+                                    ]),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Telefone:'),
+                                  TextFormField(
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    controller: _controller['phone'],
+                                    decoration: InputDecoration(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: textFormFieldMaxWidth,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          textFormFieldBorderRadius,
+                                        ),
+                                      ),
+                                      hintText: '(00) 9 1234-5678',
+                                      hintStyle: const TextStyle(
+                                        color: hintTextColor,
+                                      ),
+                                    ),
+                                    validator: (value) =>
+                                        combine([() => isNotEmpty(value)]),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Senha:'),
+                                  TextFormField(
+                                    controller: _controller['password'],
+                                    autocorrect: false,
+                                    obscureText: !_viewPassword,
+                                    obscuringCharacter: '*',
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    decoration: InputDecoration(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: textFormFieldMaxWidth,
+                                      ),
+                                      hintText: 'senha123',
+                                      hintStyle: const TextStyle(
+                                        color: hintTextColor,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          textFormFieldBorderRadius,
+                                        ),
+                                      ),
+                                      suffixIcon: IconButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _viewPassword = !_viewPassword;
+                                          });
+                                        },
+                                        icon: Icon(
+                                          _viewPassword == true
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                        ),
+                                      ),
+                                    ),
+                                    validator: (value) => combine([
+                                      () => isNotEmpty(value),
+                                      () => hasEightChars(value),
+                                    ]),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Confirme a senha:'),
+                                  TextFormField(
+                                    controller: _controller['confirmPassword'],
+                                    autocorrect: false,
+                                    obscureText: !_viewConfirmPassword,
+                                    obscuringCharacter: '*',
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    decoration: InputDecoration(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: textFormFieldMaxWidth,
+                                      ),
+                                      hintText: 'senha123',
+                                      hintStyle: const TextStyle(
+                                        color: hintTextColor,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          textFormFieldBorderRadius,
+                                        ),
+                                      ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _viewConfirmPassword == true
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _viewConfirmPassword =
+                                                !_viewConfirmPassword;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    validator: (value) => combine([
+                                      () => isNotEmpty(value),
+                                      () => hasEightChars(value),
+                                      () => confirmPassword(
+                                        value,
+                                        _controller['password']?.text,
+                                      ),
+                                    ]),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 52.0,
+                              vertical: 16.0,
+                            ),
+                            backgroundColor: const Color(0xFF16A34A),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                          onPressed: () => _register(),
+                          child: const Text(
+                            'Registrar',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Já tem uma conta?'),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                'Faça login.',
+                                style: TextStyle(
+                                  color: Color(0xFF2563EB),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -459,11 +374,5 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    controller.forEach((key, value) => value.dispose());
-    super.dispose();
   }
 }

@@ -1,7 +1,9 @@
 import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
+import 'package:lance_certo/mixins/validations_mixin.dart';
 import 'package:lance_certo/models/product.dart';
 import 'package:lance_certo/services/product_service.dart';
+import 'package:lance_certo/utils/responsive.dart';
 
 class ProductCreationWidget extends StatefulWidget {
   const ProductCreationWidget({required this.onProductCreated, super.key});
@@ -12,39 +14,23 @@ class ProductCreationWidget extends StatefulWidget {
   State<ProductCreationWidget> createState() => _ProductCreationWidgetState();
 }
 
-class _ProductCreationWidgetState extends State<ProductCreationWidget> {
-  bool _isLoading = false;
-
+class _ProductCreationWidgetState extends State<ProductCreationWidget>
+    with ValidationsMixin {
+  final _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _productController = {
     'name': TextEditingController(),
     'description': TextEditingController(),
     'category': TextEditingController(),
     'imageUrl': TextEditingController(),
   };
-  final Map<String, String?> _productError = {
-    'name': null,
-    'description': null,
-    'category': null,
-    'imageUrl': null,
-  };
+  bool _isLoading = false;
 
   void _submitProduct() async {
     setState(() {
       _isLoading = true;
     });
 
-    bool hasError = false;
-
-    _productController.forEach((key, value) {
-      if (key != 'imageUrl' && value.text.isEmpty) {
-        _productError[key] = 'Campo obrigatório.';
-        hasError = true;
-
-        return;
-      }
-    });
-
-    if (hasError) {
+    if (!_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = false;
       });
@@ -102,108 +88,124 @@ class _ProductCreationWidgetState extends State<ProductCreationWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 16.0,
-            children: [
-              const Text(
-                'Criar Novo Produto',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
-              ),
-              TextField(
-                controller: _productController['name'],
-                decoration: InputDecoration(
-                  labelText: 'Nome do Produto',
-                  errorText: _productError['name'],
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(6)),
+    final fontSizeTitle = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 24.0,
+      sm: 32.0,
+    );
+
+    final fontSizeHintText = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 16.0,
+    );
+
+    return SafeArea(
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: SingleChildScrollView(
+              reverse: true,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 12.0,
+                children: [
+                  Text(
+                    'Criar Novo Produto',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: fontSizeTitle,
+                    ),
                   ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _productError['name'] = null;
-                  });
-                },
-              ),
-              TextField(
-                controller: _productController['description'],
-                decoration: InputDecoration(
-                  labelText: 'Descrição',
-                  errorText: _productError['description'],
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(6)),
+                  Form(
+                    key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: Column(
+                      spacing: 8.0,
+                      children: [
+                        TextFormField(
+                          controller: _productController['name'],
+                          decoration: InputDecoration(
+                            labelText: 'Nome do Produto',
+                            labelStyle: TextStyle(fontSize: fontSizeHintText),
+                            border: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(6),
+                              ),
+                            ),
+                          ),
+                          validator: (value) => isNotEmpty(value),
+                        ),
+                        TextFormField(
+                          controller: _productController['description'],
+                          decoration: InputDecoration(
+                            labelText: 'Descrição',
+                            labelStyle: TextStyle(fontSize: fontSizeHintText),
+                            border: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(6),
+                              ),
+                            ),
+                          ),
+                          validator: (value) => isNotEmpty(value),
+                        ),
+                        TextFormField(
+                          controller: _productController['category'],
+                          decoration: InputDecoration(
+                            labelText: 'Categoria',
+                            labelStyle: TextStyle(fontSize: fontSizeHintText),
+                            border: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(6),
+                              ),
+                            ),
+                          ),
+                          validator: (value) => isNotEmpty(value),
+                        ),
+                        TextFormField(
+                          controller: _productController['imageUrl'],
+                          decoration: InputDecoration(
+                            labelText: 'URL da Imagem (opcional)',
+                            labelStyle: TextStyle(fontSize: fontSizeHintText),
+                            border: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(6),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _productError['description'] = null;
-                  });
-                },
-              ),
-              TextField(
-                controller: _productController['category'],
-                decoration: InputDecoration(
-                  labelText: 'Categoria',
-                  errorText: _productError['category'],
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(6)),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 37, 99, 235),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: _submitProduct,
+                    child: const Text('Criar Produto'),
                   ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _productError['category'] = null;
-                  });
-                },
+                ],
               ),
-              TextField(
-                controller: _productController['imageUrl'],
-                decoration: InputDecoration(
-                  labelText: 'URL da Imagem (opcional)',
-                  errorText: _productError['imageUrl'],
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(6)),
-                  ),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _productError['imageUrl'] = null;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 37, 99, 235),
-                  foregroundColor: Colors.white,
-                  // fixedSize: Size(MediaQuery.of(context).size.width * 0.13, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: _submitProduct,
-                child: const Text('Criar Produto'),
-              ),
-            ],
+            ),
           ),
-        ),
-        if (_isLoading) ...[
-          ModalBarrier(
-            dismissible: false,
-            color: Colors.black.withValues(alpha: 0.4),
-          ),
-          const Center(child: CircularProgressIndicator()),
+          if (_isLoading) ...[
+            ModalBarrier(
+              dismissible: false,
+              color: Colors.black.withValues(alpha: 0.4),
+            ),
+            const Center(child: CircularProgressIndicator()),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

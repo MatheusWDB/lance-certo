@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:lance_certo/models/auction.dart';
 import 'package:lance_certo/models/auction_status.dart';
+import 'package:lance_certo/models/user.dart';
+import 'package:lance_certo/utils/currency_formatting.dart';
+import 'package:lance_certo/utils/responsive.dart';
 import 'package:lance_certo/widgets/auction_details_widget.dart';
 import 'package:lance_certo/widgets/auction_timer_widget.dart';
 
-class AuctionListWidget extends StatefulWidget {
-  const AuctionListWidget({
+class AuctionListItemWidget extends StatefulWidget {
+  const AuctionListItemWidget({
     required this.auction,
     required this.updateList,
     super.key,
@@ -16,34 +18,35 @@ class AuctionListWidget extends StatefulWidget {
   final Future<void> Function() updateList;
 
   @override
-  State<AuctionListWidget> createState() => _AuctionListWidgetState();
+  State<AuctionListItemWidget> createState() => _AuctionListItemWidgetState();
 }
 
-class _AuctionListWidgetState extends State<AuctionListWidget> {
-  late Auction auction;
-
-  String currencyFormat(double? number) {
-    final value = number ?? 0.0;
-    return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(value);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    auction = widget.auction;
-  }
-
+class _AuctionListItemWidgetState extends State<AuctionListItemWidget> {
   @override
   Widget build(BuildContext context) {
-    if (auction.status == AuctionStatus.CLOSED) {
+    if (widget.auction.status == AuctionStatus.CLOSED) {
       return const SizedBox.shrink();
     }
+
+    final containerHeigth = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 227.0,
+      md: 207.0,
+    );
+
+    final fontSizeCurrentBid = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 18.0,
+      md: 24.0,
+    );
+
     return Card(
       color: Colors.white,
-      shadowColor: Colors.grey,
-      elevation: 2,
+      shadowColor: widget.auction.seller!.id == User.currentUser!.id
+          ? Colors.grey
+          : const Color.fromARGB(255, 255, 231, 209),
+      elevation: 3,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           SizedBox(
             height: 140.0,
@@ -72,14 +75,17 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          Container(
+            padding: const EdgeInsets.all(14.0),
+            height: containerHeigth,
             child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10.0,
               children: [
                 Text(
-                  auction.product!.name,
+                  widget.auction.product!.name,
                   textAlign: TextAlign.start,
                   maxLines: 2,
                   style: const TextStyle(
@@ -88,7 +94,7 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                   ),
                 ),
                 Text(
-                  auction.product!.description,
+                  widget.auction.product!.description,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Row(
@@ -102,11 +108,12 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                           style: TextStyle(fontSize: 12),
                         ),
                         Text(
-                          currencyFormat(auction.currentBid),
-
-                          style: const TextStyle(
+                          CurrencyFormatting.currencyFormat(
+                            widget.auction.currentBid,
+                          ),
+                          style: TextStyle(
                             color: Color.fromARGB(255, 29, 79, 218),
-                            fontSize: 24,
+                            fontSize: fontSizeCurrentBid,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -120,7 +127,7 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                           style: TextStyle(fontSize: 12),
                         ),
                         AuctionTimerWidget(
-                          endTime: auction.endDateAndTime,
+                          endTime: widget.auction.endDateAndTime,
                           updateList: () => widget.updateList(),
                         ),
                       ],
@@ -130,13 +137,16 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 59, 130, 246),
+                      backgroundColor:
+                          widget.auction.seller!.id != User.currentUser!.id
+                          ? Color.fromARGB(255, 59, 130, 246)
+                          : Colors.red,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       textStyle: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 16.0,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -147,7 +157,7 @@ class _AuctionListWidgetState extends State<AuctionListWidget> {
                         isScrollControlled: true,
                         builder: (BuildContext context) {
                           return AuctionDetailsWidget(
-                            auction: auction,
+                            auction: widget.auction,
                             updateList: widget.updateList,
                           );
                         },

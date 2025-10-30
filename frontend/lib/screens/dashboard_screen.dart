@@ -9,6 +9,7 @@ import 'package:lance_certo/models/user_role.dart';
 import 'package:lance_certo/services/auction_service.dart';
 import 'package:lance_certo/services/bid_service.dart';
 import 'package:lance_certo/services/web_socket_service.dart';
+import 'package:lance_certo/utils/responsive.dart';
 import 'package:lance_certo/widgets/dashboard_list_widget.dart';
 import 'package:lance_certo/widgets/main_menu_widget.dart';
 import 'package:lance_certo/mixins/web_socket_notifier_mixin.dart';
@@ -22,10 +23,9 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin, WebSocketNotifierMixin<DashboardScreen> {
-  late Future<PaginatedResponse<Bid>> _bidsFuture;
-  late Future<PaginatedResponse<Auction>> _auctionsFuture;
   late final TabController _tabController;
-
+  late Future<PaginatedResponse<Auction>> _auctionsFuture;
+  late Future<PaginatedResponse<Bid>> _bidsFuture;
   int _activeMenu = 0;
 
   void _fetchMyBidsWithAuctions() async {
@@ -58,7 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       case 0:
         return 'Meus Lances Ativos';
       case 1:
-        return 'Meus Leilões Criados';
+        return 'Meus Leilões';
       case 2:
         return 'Leilões Encerrados';
       default:
@@ -78,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     });
   }
 
-  Widget _emptyContenMmessage(String message) {
+  Widget _emptyContenMessage(String message) {
     return Center(child: Text('Nenhum $message encontrado.'));
   }
 
@@ -92,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       WebSocketService.registerBidNotifierForSellers(onSellerBidUpdate);
       WebSocketService.registerStatusNotifierForSellers(onSellerStatusUpdate);
     }
-    
+
     _tabController = TabController(length: 3, vsync: this);
     _fetchMyBidsWithAuctions();
   }
@@ -105,72 +105,165 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final firstContainerPadding = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 0.0,
+      md: 30.0,
+    );
+
+    final secondContainerBorderRadius = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 0.0,
+      md: 8.0,
+    );
+
+    final fontSizeTitle = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 20.0,
+      sm: 30.0,
+      md: 35.0,
+    );
+
+    final fontSizeTabBar = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 0.0,
+      sm: 16.0,
+    );
+
+    final fontSizeSubTitle = Responsive.valueForBreakpoints(
+      context: context,
+      xs: 16.0,
+      sm: 23.0,
+    );
+
+    final List<Map<String, dynamic>> menu = [
+      {'value': 0, 'label': 'Meus Lances'},
+      {'value': 1, 'label': 'Meus Leilões (Vendedor)'},
+      {'value': 2, 'label': 'Leilões Encerrados'},
+    ];
+
     return Scaffold(
       body: SafeArea(
         child: Container(
+          padding: EdgeInsets.all(firstContainerPadding),
           decoration: const BoxDecoration(
             color: Color.fromARGB(255, 243, 244, 246),
           ),
           child: Center(
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.87,
-              padding: const EdgeInsets.all(32.0),
-              margin: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(24.0),
+              constraints: const BoxConstraints(maxWidth: Responsive.xxl * .9),
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(
+                  secondContainerBorderRadius,
+                ),
               ),
               child: Column(
                 spacing: 8.0,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const MainMenuWidget(currentRoute: '/dashboard'),
-                  const Text(
-                    'Minha Área',
-                    style: TextStyle(fontSize: 37, fontWeight: FontWeight.bold),
-                  ),
-                  TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
-                    tabs: [
-                      const Text(
-                        'Meus Lances',
-                        style: TextStyle(fontSize: 16.0),
-                      ),
-                      Text(
-                        'Meus Leilões (Vendedor)',
-                        style: TextStyle(
-                          fontSize: 16.0,
-                          color: User.currentUser!.role == UserRole.BUYER
-                              ? Colors.grey.shade400
-                              : Colors.black,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 48.0),
+                          child: Text(
+                            'Minha Área',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: fontSizeTitle,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                      const Text(
-                        'Leilões Encerrados',
-                        style: TextStyle(fontSize: 16.0),
-                      ),
-                    ],
-                    onTap: (value) {
-                      if (value == 1 &&
-                          User.currentUser!.role == UserRole.BUYER) {
-                        setState(() {
-                          _tabController.index = _activeMenu;
-                        });
-                        AlertInfo.show(
-                          context: context,
-                          text:
-                              'Somente vendedores podem acessar a aba "Meus Leilões".',
-                          typeInfo: TypeInfo.warning,
-                        );
+                      if (Responsive.isExtraSmall(context))
+                        PopupMenuButton(
+                          initialValue: _activeMenu,
+                          icon: const Icon(Icons.menu),
+                          onSelected: (value) {
+                            if (value as int == 1 &&
+                                User.currentUser!.role == UserRole.BUYER) {
+                              setState(() {
+                                _tabController.index = _activeMenu;
+                              });
+                              AlertInfo.show(
+                                context: context,
+                                text:
+                                    'Somente vendedores podem acessar a aba "Meus Leilões".',
+                                typeInfo: TypeInfo.warning,
+                              );
 
-                        return;
-                      }
-                      _changeMenu(value);
-                    },
+                              return;
+                            }
+
+                            _changeMenu(value);
+                          },
+                          itemBuilder: (BuildContext context) {
+                            return [
+                              PopupMenuItem(
+                                value: menu[0]['value'],
+                                child: Text(menu[0]['label']),
+                              ),
+                              PopupMenuItem(
+                                value: menu[1]['value'],
+                                child: Text(menu[1]['label']),
+                              ),
+                              PopupMenuItem(
+                                value: menu[2]['value'],
+                                child: Text(menu[2]['label']),
+                              ),
+                            ];
+                          },
+                        ),
+                    ],
                   ),
+                  if (!Responsive.isExtraSmall(context))
+                    TabBar(
+                      controller: _tabController,
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.start,
+                      tabs: [
+                        Text(
+                          menu[0]['label'],
+                          style: TextStyle(fontSize: fontSizeTabBar),
+                        ),
+                        Text(
+                          menu[1]['label'],
+                          style: TextStyle(
+                            fontSize: fontSizeTabBar,
+                            color: User.currentUser!.role == UserRole.BUYER
+                                ? Colors.grey.shade400
+                                : null,
+                          ),
+                        ),
+                        Text(
+                          menu[2]['label'],
+                          style: TextStyle(fontSize: fontSizeTabBar),
+                        ),
+                      ],
+                      onTap: (value) {
+                        if (value == 1 &&
+                            User.currentUser!.role == UserRole.BUYER) {
+                          setState(() {
+                            _tabController.index = _activeMenu;
+                          });
+                          AlertInfo.show(
+                            context: context,
+                            text:
+                                'Somente vendedores podem acessar a aba "Meus Leilões".',
+                            typeInfo: TypeInfo.warning,
+                          );
+
+                          return;
+                        }
+
+                        _changeMenu(value);
+                      },
+                    ),
                   Expanded(
                     child: Column(
                       spacing: 16.0,
@@ -179,8 +272,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                         Text(
                           _getMenuTitle(),
                           textAlign: TextAlign.start,
-                          style: const TextStyle(
-                            fontSize: 23.0,
+                          style: TextStyle(
+                            fontSize: fontSizeSubTitle,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -203,8 +296,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                               } else if (!snapshot.hasData ||
                                   snapshot.data!.content.isEmpty) {
                                 return _activeMenu == 0
-                                    ? _emptyContenMmessage('lance')
-                                    : _emptyContenMmessage('leilão');
+                                    ? _emptyContenMessage('lance')
+                                    : _emptyContenMessage('leilão');
                               } else {
                                 if (_activeMenu == 0 &&
                                     !snapshot.data!.content
@@ -214,7 +307,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                               element.auction!.status ==
                                               AuctionStatus.ACTIVE,
                                         )) {
-                                  return _emptyContenMmessage('lance ativo');
+                                  return _emptyContenMessage('lance ativo');
                                 }
 
                                 if (_activeMenu == 2 &&
@@ -225,7 +318,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                               element.auction!.status ==
                                               AuctionStatus.CLOSED,
                                         )) {
-                                  return _emptyContenMmessage(
+                                  return _emptyContenMessage(
                                     'leilão encerrado',
                                   );
                                 }
