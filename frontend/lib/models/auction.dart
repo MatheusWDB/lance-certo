@@ -72,18 +72,18 @@ class Auction {
   String toString() {
     return 'Auction(\n'
         '  id: $id,\n'
-        '  product: ${product?.toString() ?? 'N/A'},\n' // Acessa o nome do produto (se não for null)
-        '  seller: ${seller?.username ?? 'N/A'},\n' // Acessa o username do vendedor
+        '  product: ${product?.toString() ?? 'N/A'},\n'
+        '  seller: ${seller?.username ?? 'N/A'},\n'
         '  startDateAndTime: ${DateFormat('dd/MM/yyyy HH:mm').format(startDateAndTime)},\n'
         '  endDateAndTime: ${DateFormat('dd/MM/yyyy HH:mm').format(endDateAndTime)},\n'
         '  initialPrice: $initialPrice,\n'
         '  minimunBidIncrement: $minimunBidIncrement,\n'
-        '  currentBid: ${currentBid ?? 'N/A'},\n' // Se currentBid for null, mostra 'N/A'
+        '  currentBid: ${currentBid ?? 'N/A'},\n'
         '  currentBidder: ${currentBidder?.username ?? 'N/A'},\n'
-        '  status: ${status?.name ?? 'N/A'},\n' // Acessa o nome do enum
+        '  status: ${status?.name ?? 'N/A'},\n'
         '  winner: ${winner?.username ?? 'N/A'},\n'
         '  createdAt: ${createdAt != null ? DateFormat('dd/MM/yyyy HH:mm').format(createdAt!) : 'N/A'},\n'
-        '  updatedAt: ${updatedAt != null ? DateFormat('dd/MM/yyyy HH:mm').format(updatedAt!) : 'N/A'},\n' // Se bids for null, mostra 0
+        '  updatedAt: ${updatedAt != null ? DateFormat('dd/MM/yyyy HH:mm').format(updatedAt!) : 'N/A'},\n'
         ')';
   }
 }
