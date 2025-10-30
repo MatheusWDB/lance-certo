@@ -1,10 +1,10 @@
 import 'package:alert_info/alert_info.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:lance_certo/models/auction.dart';
 import 'package:lance_certo/models/auction_status.dart';
 import 'package:lance_certo/models/bid.dart';
 import 'package:lance_certo/models/user.dart';
+import 'package:lance_certo/utils/currency_formatting.dart';
 
 mixin WebSocketNotifierMixin<T extends StatefulWidget> on State<T> {
   void _showAlert(String text, {TypeInfo type = TypeInfo.info}) {
@@ -13,15 +13,12 @@ mixin WebSocketNotifierMixin<T extends StatefulWidget> on State<T> {
     }
   }
 
-  String currencyFormat(double? number) {
-    final value = number ?? 0.0;
-    return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(value);
-  }
-
   void onBidUpdate(Map<String, dynamic> message) {
     final Bid bidResponse = Bid.fromJson(message);
     final String productName = bidResponse.auction!.product!.name;
-    final String newBidAmount = currencyFormat(bidResponse.auction!.currentBid);
+    final String newBidAmount = CurrencyFormatting.currencyFormat(
+      bidResponse.auction!.currentBid,
+    );
 
     final String text =
         'Lance Superado! O novo valor para "$productName" é de: $newBidAmount. Dê um lance maior AGORA!';
@@ -33,7 +30,9 @@ mixin WebSocketNotifierMixin<T extends StatefulWidget> on State<T> {
   void onStatusUpdate(Map<String, dynamic> message) {
     final Auction auctionResponse = Auction.fromJson(message);
     final String productName = auctionResponse.product!.name;
-    final String newBidAmount = currencyFormat(auctionResponse.currentBid);
+    final String newBidAmount = CurrencyFormatting.currencyFormat(
+      auctionResponse.currentBid,
+    );
 
     final String text = auctionResponse.winner!.name == User.currentUser!.name
         ? '🎉 Você Venceu! Arrematou "$productName" por $newBidAmount. Prossiga para pagamento.'
@@ -50,7 +49,9 @@ mixin WebSocketNotifierMixin<T extends StatefulWidget> on State<T> {
   void onSellerBidUpdate(Map<String, dynamic> message) {
     final Bid bidResponse = Bid.fromJson(message);
     final String productName = bidResponse.auction!.product!.name;
-    final String newBidAmount = currencyFormat(bidResponse.auction!.currentBid);
+    final String newBidAmount = CurrencyFormatting.currencyFormat(
+      bidResponse.auction!.currentBid,
+    );
 
     final String text =
         '💰 Venda em Andamento! O leilão do produto "$productName" acaba de receber um novo lance: $newBidAmount.';
@@ -75,7 +76,9 @@ mixin WebSocketNotifierMixin<T extends StatefulWidget> on State<T> {
         break;
       case AuctionStatus.CLOSED:
         if (auctionResponse.winner != null) {
-          final finalBid = currencyFormat(auctionResponse.currentBid);
+          final finalBid = CurrencyFormatting.currencyFormat(
+            auctionResponse.currentBid,
+          );
           statusText =
               '🎉 Leilão ENCERRADO! O produto "$productName" foi vendido por $finalBid.';
           type = TypeInfo.success;
