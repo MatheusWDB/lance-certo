@@ -5,7 +5,10 @@ mixin ValidationsMixin {
   }
 
   String? hasEightChars(String? value, [String? message]) {
-    if (value!.length < 8) return message ?? 'A senha tem que ter no mínimo 8 caracteres.';
+    if (value!.length < 8) {
+      return message ?? 'A senha tem que ter no mínimo 8 caracteres.';
+    }
+
     return null;
   }
 
@@ -20,6 +23,27 @@ mixin ValidationsMixin {
         return message ?? 'Formato de email inválido.';
       }
     }
+    return null;
+  }
+
+  String? confirmPassword(
+    String? value,
+    String? referenceValue, [
+    String? message,
+  ]) {
+    if (value != referenceValue) {
+      return message ?? 'As senhas não correspondem.';
+    }
+
+    return null;
+  }
+
+  String? isNumber(String? value, [String? message]) {
+    final parsedNumber = double.tryParse(value!);
+    if (parsedNumber == null || parsedNumber.isNaN) {
+      return message ?? 'Somente números e pontuação';
+    }
+
     return null;
   }
 
