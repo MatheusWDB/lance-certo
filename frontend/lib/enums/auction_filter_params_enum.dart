@@ -10,4 +10,7 @@ enum AuctionFilterParamsEnum {
   const AuctionFilterParamsEnum(this.displayName);
 
   final String displayName;
+  
+  @override
+  String toString() => name;
 }
